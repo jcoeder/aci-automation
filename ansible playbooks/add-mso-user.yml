@@ -1,0 +1,21 @@
+---
+- name: Add User to MSO
+  hosts: mso-1
+
+  tasks:
+   - name: Add User to MSO
+     mso_user:
+       host: "{{ ansible_host }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       user: AnsibleUser
+       user_password: AnsibleUser!1
+       first_name: Ansible
+       last_name: RedHat
+       email: AnsibleUser@RedHat.com
+       phone: +1 513 555 1234
+       state: present
+       account_status: active
+       use_ssl: yes
+       validate_certs: no
+     delegate_to: localhost
