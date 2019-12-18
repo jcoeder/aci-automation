@@ -1,0 +1,8 @@
+serial
+ansible==2.9
+paramiko
+scp
+netmiko
+pexpect
+requests
+PyVmomi
