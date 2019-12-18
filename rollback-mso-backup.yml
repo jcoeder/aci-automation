@@ -1,0 +1,48 @@
+---
+- name: Rollback MSO Backup
+  hosts: mso-1
+
+  tasks:
+  - name: Log into MSO
+    uri:
+      url: https://{{ ansible_host }}/api/v1/auth/login
+      method: POST
+      body_format: json
+      body: {"username":"{{ username }}","password":"{{ password }}"}
+      return_content: yes
+      status_code: 201
+      validate_certs: no
+    register: token
+#  - debug:
+#      var: token["json"]["token"]
+
+  - name: List MSO Backups
+    uri:
+      url: https://{{ ansible_host }}/api/v1/backups
+      method: GET
+      headers:
+         Authorization: Bearer {{ token["json"]["token"] }}
+      return_content: yes
+      body_format: json
+      validate_certs: no
+    register: backups
+  - debug:
+      var: backups["json"]["backups"]
+
+  - pause:
+      prompt: "Which backup ID would you like to restore?"
+    register: "BackupID"
+  - debug:
+      var: BackupID
+
+  - name: Rollback MSO Backup
+    uri:
+      url: https://{{ ansible_host }}/api/v1/backups/{{ BackupID["user_input"] }}/restore
+      method: PUT
+      headers:
+        Authorization: Bearer {{ token["json"]["token"] }}
+      body_format: json
+      validate_certs: no
+    register: result
+  - debug:
+      var: result
