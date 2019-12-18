@@ -34,3 +34,13 @@ This playbook should be imported into other playbooks that make changes to MSO t
 - name: Backup MSO
   import_playbook: create-mso-backup.yml
 ```
+
+
+## main.py
+
+This script will take an argument looking for the xlsx file to begin reading information from for the ACI Deployment.  Once it reads the information it will then create ansible variable files stored in the 'ansible variables' folder. The below example of how to use the script will include the file name that is bundled in the project as a template.
+
+```
+source venv/bin/activate
+python main.py --aci_excel_sheet ACI_worksheet.xlsx
+```
