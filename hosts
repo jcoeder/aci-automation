@@ -34,7 +34,7 @@ ansible_connection=local
 
 [nxos:vars]
 username=admin
-password=PASSWORD
+password=SWITCH_PROVISION_REPLACE
 ansible_connection=network_cli
 ansible_network_os=nxos
 
