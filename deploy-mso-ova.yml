@@ -1,4 +1,5 @@
 # Uploads 3 copies of the MSC ova file
+# Does not require a host file.  Uses implicit localhost
 # Each file is about 4.5GB.  Allows user to multitask
 ---
 - name: Deploy ACI MSO OVA
