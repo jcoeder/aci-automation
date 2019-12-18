@@ -1,0 +1,44 @@
+[all:vars]
+ansible_python_interpreter=venv/bin/python
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+
+[local]
+localhost ansible_connection=local
+
+[mso]
+node-1 ansible_host=10.5.8.42
+node-2 ansible_host=10.5.8.43
+node-3 ansible_host=10.5.8.44
+
+[mso:vars]
+username=admin
+password=PASSWORD
+ansible_connection=local
+
+[esxi]
+esxi1 ansible_host=172.31.88.19
+
+[esxi:vars]
+username=root
+password=PASSWORD
+ansible_connection=ssh
+
+[apic]
+top-apic ansible_host=10.5.8.11
+bot-apic ansible_host=10.5.9.11
+
+[apic:vars]
+username=admin
+password=PASSWORD
+ansible_connection=local
+
+[nxos:vars]
+username=admin
+password=PASSWORD
+ansible_connection=network_cli
+ansible_network_os=nxos
+
+[nxos]
+172.31.33.201
+192.168.254.32
+192.168.254.33
