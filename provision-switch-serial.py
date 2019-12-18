@@ -124,16 +124,22 @@ time.sleep(8)
 
 ser.close()
 
-# with open('hosts', 'ab+') as f3:
-#	hosts = f3.read().splitlines()
-#	nxos_index = hosts.index('[nxos]')
-#	f3.seek(nxos_index + 1)
-#	f3.write(oob_addresses[0] + '\n')
-
 # Should probably write seek to find [nxos] and append after that
 with open('hosts', 'a+') as f3:
     f3.writelines(oob_addresses[0] + '\n')
 
+# Update inventory password to match what was supplied
+with open('hosts', 'r') as f:
+    hosts = f.read().splitlines()
+
+hosts_pw_index = hosts.index('password=SWITCH_PROVISION_REPLACE')
+hosts[hosts_pw_index] = 'password=' + str_password
+
+with open('hosts', 'w') as f:
+    for item in hosts:
+        f.writelines("%s\n" % item)     
+        
+# Delete this IP address from available IP addresses so that it is not reused
 del oob_addresses[0]
 
 with open('oob-addresses.txt', 'w') as f1:
