@@ -13,8 +13,6 @@
     - ansible_user: "{{ username }}"
     - ansible_password: "{{ password }}"
     - filename: "aci-n9000-dk9.14.2.2f.bin"
-    - gateway: "192.168.254.1"
-    - subnet: "/24"
 
   tasks:
   - name: "Initiate SCP file copy from device"
@@ -35,7 +33,7 @@
       save_when: modified
 
   - name: Set ACI boot with python script
-    command: python set-boot.py {{ ansible_host }} {{ username }} {{ password }} {{ filename }} {{ gateway }} {{ subnet }}
+    command: python set-boot.py {{ ansible_host }} {{ username }} {{ password }} {{ filename }}
 
   - name: Reboot device
     nxos_reboot:
