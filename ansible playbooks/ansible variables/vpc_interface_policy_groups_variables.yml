@@ -1,0 +1,34 @@
+APIC:
+- AEP: LAB_AEP
+  CDP Policy: CDP_ON
+  LLDP Policy: LLDP_ON
+  Leaf or Spine: Leaf
+  Link Level Policy: INT_POL_10G
+  MCP Policy: MCP_ON
+  Name: LAB_VPC_PORTS_10_IPG
+  Port Channel Policy: PC_LACP_ACTIVE
+  Port Security Policy: PS_OFF
+  Site: LABDC
+  Type: vpc
+- AEP: LAB_AEP
+  CDP Policy: CDP_ON
+  LLDP Policy: LLDP_ON
+  Leaf or Spine: Leaf
+  Link Level Policy: INT_POL_25G
+  MCP Policy: MCP_ON
+  Name: LAB_VPC_PORTS_11_IPG
+  Port Channel Policy: PC_LACP_ACTIVE
+  Port Security Policy: PS_OFF
+  Site: LABDC
+  Type: vpc
+- AEP: LAB_AEP
+  CDP Policy: CDP_ON
+  LLDP Policy: LLDP_ON
+  Leaf or Spine: Leaf
+  Link Level Policy: INT_POL_40G
+  MCP Policy: MCP_ON
+  Name: LAB_VPC_PORTS_12_IPG
+  Port Channel Policy: PC_MAC_PINNING
+  Port Security Policy: PS_OFF
+  Site: LABDC
+  Type: vpc
