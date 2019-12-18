@@ -8,7 +8,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## provision-switch.py
+## provision-switch-serial.py
 ```
 source venv/bin/activate
 python provision-switch-serial.py
