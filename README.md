@@ -16,3 +16,21 @@ This script will allow the user to roam around the data center with a serial cab
 source venv/bin/activate
 python provision-switch-serial.py
 ```
+
+
+
+
+
+
+
+
+
+
+### create-mso-backup.yml
+
+This playbook should be imported into other playbooks that make changes to MSO to create a backup from before the changes
+
+```
+- name: Backup MSO
+  import_playbook: create-mso-backup.yml
+```
