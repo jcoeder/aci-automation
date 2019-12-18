@@ -1,0 +1,34 @@
+---
+- hosts: localhost
+  connection: local
+  tasks:
+# Pull in the variable list section, this includes TWO variable files and gives them a name.  A with_nested section iterates over each of them later
+# in the with_nested section it puts the results into a list called 'item'. From the apic_host['APIC'] that is called first in with_nested
+# that goes into the list entry item[0] and the vlan_pool['APIC'] goes into item[1]
+    - name: include first variables file
+      include_vars: 
+        file: "ansible variables/fabric_nodes_variables.yml"
+        name: fabric_nodes
+    - name: include second variables file
+      include_vars:
+        file: "ansible variables/apic_host_ip_variables.yml"
+        name: apic_host
+# Creation of fabric switches section
+    - name: Add fabric nodes
+      aci_fabric_node:
+            host: "{{ item[0]['APIC OOB Address'] }}"
+            username: "{{ item[0]['Username'] }}"
+            password: "{{ item[0]['Password'] }}"
+            serial: "{{ item[1]['Serial Number'] }}"
+            node_id: "{{ item[1]['Node ID'] }}"
+            switch: "{{ item[1]['Fabric Switch Name'] }}"
+            role: "{{ item[1]['Role'] }}"
+            state: absent
+            validate_certs: False
+            state: absent
+      # the with items will take the variables file which includes a diciontary named APIC
+            # the with_nested items will take the variables files and iterate through them
+      with_nested: 
+        - "{{ apic_host['APIC'] }}"
+        - "{{ fabric_nodes['APIC'] }}"
+      delegate_to: localhost

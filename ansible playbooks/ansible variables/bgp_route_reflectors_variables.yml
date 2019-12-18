@@ -1,0 +1,6 @@
+APIC:
+- BGP AS: 65001
+  Node ID: 901
+  Policy: BGP Route Reflector
+  Policy Name: default
+  Site: LABDC

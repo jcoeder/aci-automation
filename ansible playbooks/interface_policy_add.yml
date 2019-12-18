@@ -1,0 +1,251 @@
+---
+- hosts: localhost
+  connection: local
+  tasks:
+# Variable file inclusion section
+    - name: include variables
+      include_vars: "ansible variables/apic_host_ip_variables.yml"
+# CDP Interface Policy Section
+    - name: add CDP_ON policy
+      aci_interface_policy_cdp:
+        name: CDP_ON
+        # the "item" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item['APIC OOB Address'] }}"
+        admin_state: yes
+        username: "{{ item['Username'] }}"
+        password: "{{ item['Password'] }}"
+        validate_certs: False
+        state: present	
+      # the with items will take the variables file which includes a diciontary named APIC
+      with_items: "{{ APIC }}"
+      delegate_to: localhost
+    - name: add CDP_OFF policy
+      aci_interface_policy_cdp:
+        name: CDP_OFF
+        # the "item" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item['APIC OOB Address'] }}"
+        admin_state: no
+        username: "{{ item['Username'] }}"
+        password: "{{ item['Password'] }}"
+        validate_certs: False
+        state: present
+      # the with items will take the variables file which includes a diciontary named APIC
+      with_items: "{{ APIC }}"
+      delegate_to: localhost
+     
+# LLDP Interface Policy Section    
+    - name : add LLDP_ON policy
+      aci_interface_policy_lldp:
+        # the "item" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item['APIC OOB Address'] }}"
+        username: "{{ item['Username'] }}"
+        password: "{{ item['Password'] }}"
+        validate_certs: False
+        lldp_policy: LLDP_ON
+        receive_state: yes
+        transmit_state: yes
+      # the with items will take the variables file which includes a diciontary named APIC
+      with_items: "{{ APIC }}"
+      delegate_to: localhost
+    - name : add LLDP_OFF policy
+      aci_interface_policy_lldp:
+        # the "item" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item['APIC OOB Address'] }}"
+        username: "{{ item['Username'] }}"
+        password: "{{ item['Password'] }}"
+        validate_certs: False
+        lldp_policy: LLDP_OFF
+        receive_state: no
+        transmit_state: no
+      # the with items will take the variables file which includes a diciontary named APIC
+      with_items: "{{ APIC }}"
+      delegate_to: localhost
+      
+# Port Channel Policy Section 
+    - name: Add LACP_ACTIVE Port Channel Interface Policy 
+      aci_interface_policy_port_channel:
+        # the "item" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item['APIC OOB Address'] }}"
+        username: "{{ item['Username'] }}"
+        password: "{{ item['Password'] }}"
+        validate_certs: False
+        port_channel: PC_LACP_ACTIVE
+        min_links: 1
+        max_links: 16
+        mode: active
+      # the with items will take the variables file which includes a diciontary named APIC
+      with_items: "{{ APIC }}"
+      delegate_to: localhost
+    - name: Add MAC_PINNING Port Channel Interface Policy 
+      aci_interface_policy_port_channel:
+        # the "item" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item['APIC OOB Address'] }}"
+        username: "{{ item['Username'] }}"
+        password: "{{ item['Password'] }}"
+        validate_certs: False
+        port_channel: PC_MAC_PINNING
+        min_links: 1
+        max_links: 16
+        mode: mac-pin
+      # the with items will take the variables file which includes a diciontary named APIC
+      with_items: "{{ APIC }}"
+      delegate_to: localhost
+        
+# MisCabling Protocol (MCP) Interface Policy Section 
+    - name: Add MCP_ON MisCabling Protocol Interface Policy 
+      aci_interface_policy_mcp:
+        # the "item" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item['APIC OOB Address'] }}"
+        username: "{{ item['Username'] }}"
+        password: "{{ item['Password'] }}"
+        validate_certs: False
+        mcp: MCP_ON
+        admin_state: yes
+      # the with items will take the variables file which includes a diciontary named APIC
+      with_items: "{{ APIC }}"
+      delegate_to: localhost
+      
+# Port Security Interface Policy Section 
+    - name: Add Port Security Interface Policy Section PS_TWO_HOSTS
+      aci_interface_policy_port_security:
+        # the "item" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item['APIC OOB Address'] }}"
+        username: "{{ item['Username'] }}"
+        password: "{{ item['Password'] }}"
+        validate_certs: False
+        port_security: PS_TWO_HOSTS
+        max_end_points: 2
+        port_security_timeout: 60
+      # the with items will take the variables file which includes a diciontary named APIC
+      with_items: "{{ APIC }}"
+      delegate_to: localhost
+    - name: Add Port Security Interface Policy Section PS_TEN_HOSTS
+      aci_interface_policy_port_security:
+        # the "item" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item['APIC OOB Address'] }}"
+        username: "{{ item['Username'] }}"
+        password: "{{ item['Password'] }}"
+        validate_certs: False
+        port_security: PS_TEN_HOSTS
+        max_end_points: 10
+        port_security_timeout: 60
+      # the with items will take the variables file which includes a diciontary named APIC
+      with_items: "{{ APIC }}"
+      delegate_to: localhost
+    - name: Add Port Security Interface Policy Section PS_OFF
+      aci_interface_policy_port_security:
+        # the "item" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item['APIC OOB Address'] }}"
+        username: "{{ item['Username'] }}"
+        password: "{{ item['Password'] }}"
+        validate_certs: False
+        port_security: PS_OFF
+        max_end_points: 0
+      # the with items will take the variables file which includes a diciontary named APIC
+      with_items: "{{ APIC }}"
+      delegate_to: localhost
+      
+# Link Level Interface Policy Section, since we use the aci_rest command and it is just a pure API call we ignore errors becuase if the item exists it will error out
+    - name: Add 100G Interface Policy
+      aci_rest:
+        # the "item" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item['APIC OOB Address'] }}"
+        username: "{{ item['Username'] }}"
+        password: "{{ item['Password'] }}"
+        validate_certs: False
+        path: /api/node/mo/uni/infra/hintfpol-INT_POL_100G.json
+        method: post
+        content: {"fabricHIfPol":{"attributes":{"dn":"uni/infra/hintfpol-INT_POL_100G","name":"INT_POL_100G", autoNeg: "off", "speed":"100G","rn":"hintfpol-INT_POL_100G","status":"created"},"children":[]}}
+      # the with items will take the variables file which includes a diciontary named APIC
+      with_items: "{{ APIC }}"
+      ignore_errors: yes
+      delegate_to: localhost
+    - name: Add 50G Interface Policy
+      aci_rest:
+        # the "item" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item['APIC OOB Address'] }}"
+        username: "{{ item['Username'] }}"
+        password: "{{ item['Password'] }}"
+        validate_certs: False
+        path: /api/node/mo/uni/infra/hintfpol-INT_POL_50G.json
+        method: post
+        content: {"fabricHIfPol":{"attributes":{"dn":"uni/infra/hintfpol-INT_POL_50G","name":"INT_POL_50G", autoNeg: "off", "speed":"50G","rn":"hintfpol-INT_POL_50G","status":"created"},"children":[]}}
+      # the with items will take the variables file which includes a diciontary named APIC
+      with_items: "{{ APIC }}"
+      ignore_errors: yes
+      delegate_to: localhost
+    - name: Add 40G Interface Policy
+      aci_rest:
+        # the "item" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item['APIC OOB Address'] }}"
+        username: "{{ item['Username'] }}"
+        password: "{{ item['Password'] }}"
+        validate_certs: False
+        path: /api/node/mo/uni/infra/hintfpol-INT_POL_40G.json
+        method: post
+        content: {"fabricHIfPol":{"attributes":{"dn":"uni/infra/hintfpol-INT_POL_40G","name":"INT_POL_40G", autoNeg: "off", "speed":"40G","rn":"hintfpol-INT_POL_40G","status":"created"},"children":[]}}
+      # the with items will take the variables file which includes a diciontary named APIC
+      with_items: "{{ APIC }}"
+      ignore_errors: yes
+      delegate_to: localhost
+    - name: Add 25G Interface Policy
+      aci_rest:
+        # the "item" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item['APIC OOB Address'] }}"
+        username: "{{ item['Username'] }}"
+        password: "{{ item['Password'] }}"
+        validate_certs: False
+        path: /api/node/mo/uni/infra/hintfpol-INT_POL_25G.json
+        method: post
+        content: {"fabricHIfPol":{"attributes":{"dn":"uni/infra/hintfpol-INT_POL_25G","name":"INT_POL_25G", autoNeg: "off", "speed":"25G","rn":"hintfpol-INT_POL_25G","status":"created"},"children":[]}}
+      # the with items will take the variables file which includes a diciontary named APIC
+      with_items: "{{ APIC }}"
+      ignore_errors: yes
+      delegate_to: localhost
+    - name: Add 10G Interface Policy
+      aci_rest:
+        # the "item" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item['APIC OOB Address'] }}"
+        username: "{{ item['Username'] }}"
+        password: "{{ item['Password'] }}"
+        validate_certs: False
+        path: /api/node/mo/uni/infra/hintfpol-INT_POL_10G.json
+        method: post
+        content: {"fabricHIfPol":{"attributes":{"dn":"uni/infra/hintfpol-INT_POL_10G","name":"INT_POL_10G", autoNeg: "off", "speed":"10G","rn":"hintfpol-INT_POL_10G","status":"created"},"children":[]}}
+      # the with items will take the variables file which includes a diciontary named APIC
+      with_items: "{{ APIC }}"
+      ignore_errors: yes
+      delegate_to: localhost
+    - name: Add 1G Interface Policy
+      aci_rest:
+        # the "item" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item['APIC OOB Address'] }}"
+        username: "{{ item['Username'] }}"
+        password: "{{ item['Password'] }}"
+        validate_certs: False
+        path: /api/node/mo/uni/infra/hintfpol-INT_POL_1G.json
+        method: post
+        content: {"fabricHIfPol":{"attributes":{"dn":"uni/infra/hintfpol-INT_POL_1G","name":"INT_POL_1G", autoNeg: "off", "speed":"1G","rn":"hintfpol-INT_POL_1G","status":"created"},"children":[]}}
+      # the with items will take the variables file which includes a diciontary named APIC
+      with_items: "{{ APIC }}"
+      ignore_errors: yes
+      delegate_to: localhost
+    - name: Add Auto Negotiate Policy
+      aci_rest:
+        # the "item" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item['APIC OOB Address'] }}"
+        username: "{{ item['Username'] }}"
+        password: "{{ item['Password'] }}"
+        validate_certs: False
+        path: /api/node/mo/uni/infra/hintfpol-INT_POL_AUTO.json
+        method: post
+        content: {"fabricHIfPol":{"attributes":{"dn":"uni/infra/hintfpol-INT_POL_AUTO","name":"INT_POL_AUTO", "rn":"hintfpol-INT_POL_AUTO","status":"created"},"children":[]}}
+      # the with items will take the variables file which includes a diciontary named APIC
+      with_items: "{{ APIC }}"
+      ignore_errors: yes
+      delegate_to: localhost
+
+# Create Interface Policy Group Section
+
+        
+        
