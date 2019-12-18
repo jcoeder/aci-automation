@@ -1,0 +1,44 @@
+# Uploads 3 copies of the MSC ova file
+# Each file is about 4.5GB.  Allows user to multitask
+---
+- name: Deploy ACI MSO OVA
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    hostname: '172.31.50.101'      # Esxi or vcenter hostname
+    username: 'root'               # Esxi or vcenter username
+    password: 'PASSWORD'           # Esxi or vcenter password
+    filename: 'esx-msc-1.2.5a.ova' # OVA file location 
+
+  tasks:
+  - name: Deploy MSO-Node1 OVA
+    vmware_deploy_ovf:
+      hostname: '{{ hostname }}'   # Esxi or vcenter hostname
+      username: '{{ username }}'   # Esxi or vcenter username
+      password: '{{ password }}'   # Esxi or vcenter password
+      ovf: '{{ filename }}'
+      wait: false
+      name: mso-node1
+      validate_certs: false
+      power_on: false
+  - name: Deploy MSO-Node2 OVA
+    vmware_deploy_ovf:
+      hostname: '{{ hostname }}'   # Esxi or vcenter hostname
+      username: '{{ username }}'   # Esxi or vcenter username
+      password: '{{ password }}'   # Esxi or vcenter password
+      ovf: '{{ filename }}'
+      wait: false
+      name: mso-node2
+      validate_certs: false
+      power_on: false
+  - name: Deploy MSO-Node3 OVA
+    vmware_deploy_ovf:
+      hostname: '{{ hostname }}'   # Esxi or vcenter hostname
+      username: '{{ username }}'   # Esxi or vcenter username
+      password: '{{ password }}'   # Esxi or vcenter password
+      ovf: '{{ filename }}'
+      wait: false
+      name: mso-node3
+      validate_certs: false
+      power_on: false
