@@ -23,14 +23,38 @@ APIC:
   VLAN Pool Type: static
   Vlan Encap Block End: 12
   Vlan Encap Block Start: 12
+- AEP: LAB_PHYSICAL_AEP
+  Domain Type: phys
+  Physical/External Domain: LAB_PHY_DOM
+  Site: LABDC
+  VLAN Pool: LAB_PD_VPOOL
+  VLAN Pool Type: static
+  Vlan Encap Block End: 13
+  Vlan Encap Block Start: 13
+- AEP: LAB_PHYSICAL_AEP
+  Domain Type: phys
+  Physical/External Domain: LAB_PHY_DOM
+  Site: LABDC
+  VLAN Pool: LAB_PD_VPOOL
+  VLAN Pool Type: static
+  Vlan Encap Block End: 14
+  Vlan Encap Block Start: 14
 - AEP: LAB_L3EO_AEP
   Domain Type: l3dom
   Physical/External Domain: LAB_L3EO_PHY_DOM
   Site: LABDC
   VLAN Pool: LAB_L3EO_VPOOL
-  VLAN Pool Type: dynamic
-  Vlan Encap Block End: 1720
+  VLAN Pool Type: static
+  Vlan Encap Block End: 1700
   Vlan Encap Block Start: 1700
+- AEP: LAB_L2EO_AEP
+  Domain Type: l2dom
+  Physical/External Domain: LAB_L2EO_PHY_DOM
+  Site: LABDC
+  VLAN Pool: LAB_L2EO_VPOOL
+  VLAN Pool Type: static
+  Vlan Encap Block End: 1800
+  Vlan Encap Block Start: 1800
 - AEP: LAB_ACI_MULTISITE_AEP
   Domain Type: l3dom
   Physical/External Domain: LAB_MSITE_L3_PHY_DOM

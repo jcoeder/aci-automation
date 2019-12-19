@@ -56,6 +56,14 @@ class ACI_Workbook_Read():
         # we need to pass the sheet for the BGP Route Reflectors
         self.bgp_route_reflectors(sheet=bgp_route_reflector_sheet)
 
+        ### open the Leaf Switch Profile Sheet
+        switch_profile_sheet = self.xlobject.fetch_data_by_column_by_sheet_name(
+            file_path=self.workbook,
+            sheet_name="Leaf Switch Profiles"
+        )
+        # we need to pass the sheet for the Switch Profile Sheet
+        self.leaf_switch_profiles(sheet=switch_profile_sheet)
+
     def float_to_int(self, sheet):
         '''
         goes through a dictionary and converts floats to ints
@@ -154,6 +162,24 @@ class ACI_Workbook_Read():
         # full_list lets us put together a dictionary of lists to pass to ansible
         full_list = {"APIC": []}
         full_path = self.ansible_variable_folder + "bgp_route_reflectors_variables.yml"
+        for data in sheet:
+            # clean the input
+            data = self.float_to_int(data)
+            # add the entry to the dictionary of lists
+            full_list["APIC"].append(data)
+        # write the info to an ansible variable doc
+        with open(full_path, "w") as file:
+            # convert to yaml before writing to sheet
+            file.write(yaml.dump(full_list))
+
+    def leaf_switch_profiles(self, sheet):
+        '''
+        Uses the xlsx file to build out the variables and generate a YAML file to be used
+        This is used for AAEP, VLAN Pools, and Physical Domains
+        '''
+        # full_list lets us put together a dictionary of lists to pass to ansible
+        full_list = {"APIC": []}
+        full_path = self.ansible_variable_folder + "leaf_switch_profiles_variables.yml"
         for data in sheet:
             # clean the input
             data = self.float_to_int(data)

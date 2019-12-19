@@ -32,3 +32,14 @@ APIC:
   Port Security Policy: PS_OFF
   Site: LABDC
   Type: leaf
+- AEP: LAB_L2EO_AEP
+  CDP Policy: CDP_OFF
+  LLDP Policy: LLDP_OFF
+  Leaf or Spine: Leaf
+  Link Level Policy: INT_POL_AUTO
+  MCP Policy: MCP_ON
+  Name: LAB_L2EO_IPG
+  Port Channel Policy: N/A
+  Port Security Policy: PS_OFF
+  Site: LABDC
+  Type: leaf
