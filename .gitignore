@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Ignore variables files but NOT the directory itself
+ansible playbooks/ansible variables/*
+!ansible playbooks/ansible variables/.keep
