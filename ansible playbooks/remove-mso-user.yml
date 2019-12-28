@@ -1,0 +1,15 @@
+---
+- name: Remove User from MSO
+  hosts: mso-1
+
+  tasks:
+   - name: Remove User from MSO
+     mso_user:
+       host: "{{ ansible_host }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       user: AnsibleUser
+       state: absent
+       use_ssl: yes
+       validate_certs: no
+     delegate_to: localhost

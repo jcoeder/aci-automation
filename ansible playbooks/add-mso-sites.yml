@@ -1,0 +1,64 @@
+# Update:
+# apic username
+# apic password
+# site id
+# url
+---
+- name: Add Sites to MSO
+  hosts: mso-1
+
+  tasks:
+    - name: Add Top Site to MSO
+      mso_site:
+        host: "{{ ansible_host }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        site: Top Site
+        apic_username: admin
+        apic_password: PASSWORD
+        apic_site_id: 1
+        urls:
+        - https://10.5.8.11
+        labels:
+        - TopSite #No spaces - optional
+        location:
+          latitude: 39.1645
+          longitude: -84.4543
+        state: present
+        use_ssl: yes
+        validate_certs: no
+      delegate_to: localhost
+
+    - name: Add Bottom Site to MSO
+      mso_site:
+        host: "{{ ansible_host }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        site: Bottom Site
+        apic_username: admin
+        apic_password: PASSWORD
+        apic_site_id: 2
+        urls:
+        - https://10.5.9.11
+        labels:
+        - BottomSite #No spaces - optional
+        location:
+          latitude: 39.1031
+          longitude: -84.5120
+        state: present
+        use_ssl: yes
+        validate_certs: no
+      delegate_to: localhost
+ 
+    - name: Query all sites
+      mso_site:
+        host: "{{ ansible_host }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: query
+        use_ssl: yes
+        validate_certs: no
+      delegate_to: localhost
+      register: query_result
+    - debug:
+        var: query_result
