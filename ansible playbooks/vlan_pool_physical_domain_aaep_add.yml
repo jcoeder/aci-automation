@@ -1,9 +1,6 @@
 ---
-- hosts: localhost
-  connection: local
-  tasks:
 # Pull in the variable list section, this includes TWO variable files and gives them a name.  A with_nested section iterates over each of them later
-# in the with_nested section it puts the results into a list called 'item'. From the apic_host['APIC'] that is called first in with_nested
+# in the with_nested section it puts the results into a list called 'item'. From the apic_host[APIC] that is called first in with_nested
 # that goes into the list entry item[0] and the vlan_pool['APIC'] goes into item[1]
     - name: include first variables file
       include_vars: 
@@ -27,8 +24,8 @@
         state: present
       # the with_nested items will take the variables files and iterate through them
       with_nested: 
-        - "{{ apic_host['APIC'] }}"
-        - "{{ vlan_pool['APIC'] }}"
+        - "{{ apic_host[APIC] }}"
+        - "{{ vlan_pool[APIC] }}"
       delegate_to: localhost
       
 # Build VLAN Pool Encap Block Section
@@ -50,8 +47,8 @@
         state: present
       # the with_nested items will take the variables files and iterate through them
       with_nested: 
-        - "{{ apic_host['APIC'] }}"
-        - "{{ vlan_pool['APIC'] }}"
+        - "{{ apic_host[APIC] }}"
+        - "{{ vlan_pool[APIC] }}"
       delegate_to: localhost
       
 # Build Physical Domains
@@ -67,8 +64,8 @@
         state: present
       # the with_nested items will take the variables files and iterate through them
       with_nested: 
-        - "{{ apic_host['APIC'] }}"
-        - "{{ vlan_pool['APIC'] }}"
+        - "{{ apic_host[APIC] }}"
+        - "{{ vlan_pool[APIC] }}"
       delegate_to: localhost
       
 # Associate VLAN Pools to Physical Domains
@@ -87,8 +84,8 @@
       delegate_to: localhost
       # the with_nested items will take the variables files and iterate through them
       with_nested: 
-        - "{{ apic_host['APIC'] }}"
-        - "{{ vlan_pool['APIC'] }}"
+        - "{{ apic_host[APIC] }}"
+        - "{{ vlan_pool[APIC] }}"
       delegate_to: localhost
 
 # Create Attachable Access Entity Profile AAEP
@@ -103,8 +100,8 @@
       delegate_to: localhost
       # the with_nested items will take the variables files and iterate through them
       with_nested: 
-        - "{{ apic_host['APIC'] }}"
-        - "{{ vlan_pool['APIC'] }}"
+        - "{{ apic_host[APIC] }}"
+        - "{{ vlan_pool[APIC] }}"
       delegate_to: localhost
       
 # Attach AAEPs to Physical Domains (which in turn links them to VLAN pools)
@@ -121,8 +118,8 @@
       delegate_to: localhost
       # the with_nested items will take the variables files and iterate through them
       with_nested: 
-        - "{{ apic_host['APIC'] }}"
-        - "{{ vlan_pool['APIC'] }}"
+        - "{{ apic_host[APIC] }}"
+        - "{{ vlan_pool[APIC] }}"
       delegate_to: localhost
 
 

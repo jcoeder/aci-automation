@@ -1,0 +1,104 @@
+---
+# Pull in the variable list section
+    - name: include apic host variables file 
+      include_vars:
+        file: "ansible variables/apic_host_ip_variables.yml"
+        name: apic_host
+    - name: include leaf switch profiles variables file
+      include_vars: 
+        file: "ansible variables/leaf_switch_profiles_variables.yml"
+        name: leaf_switch_profiles
+
+# Create the leaf switch profiles, we will tie interface selectors to them in a later step
+    - name: creating a Leaf Profile with description
+      aci_switch_policy_leaf_profile:
+        host: "{{ item[0]['APIC OOB Address'] }}"
+        username: "{{ item[0]['Username'] }}"
+        password: "{{ item[0]['Password'] }}"
+        leaf_profile: "{{ item[1]['Switch Profile'] }}"
+        state: present
+        validate_certs: False
+        state: present
+      # the with items will take the variables file which includes a diciontary named APIC
+            # the with_nested items will take the variables files and iterate through them
+      with_nested: 
+        - "{{ apic_host[APIC] }}"
+        - "{{ leaf_switch_profiles[APIC] }}"
+      delegate_to: localhost
+  
+# Create the mapping of switch selector (node id) to Leaf Switch Profile
+    - name: Creating mapping of switch selector to Leaf Switch Profile
+      aci_switch_leaf_selector:
+        host: "{{ item[0]['APIC OOB Address'] }}"
+        username: "{{ item[0]['Username'] }}"
+        password: "{{ item[0]['Password'] }}"
+        leaf_profile: "{{ item[1]['Switch Profile'] }}"
+        leaf: "{{ item[1]['Switch Selector'] }}"
+        leaf_node_blk: "{{ item[1]['Switch Selector'] }}"
+        from: "{{ item[1]['Node ID'] }}"
+        to: "{{ item[1]['Node ID'] }}"
+        state: present
+        validate_certs: False
+      # the with items will take the variables file which includes a diciontary named APIC
+            # the with_nested items will take the variables files and iterate through them
+      with_nested: 
+        - "{{ apic_host[APIC] }}"
+        - "{{ leaf_switch_profiles[APIC] }}"
+      delegate_to: localhost  
+      
+# Create leaf switch profile
+    - name: Creating leaf switch interface profile
+      aci_interface_policy_leaf_profile:
+        host: "{{ item[0]['APIC OOB Address'] }}"
+        username: "{{ item[0]['Username'] }}"
+        password: "{{ item[0]['Password'] }}"
+        leaf_interface_profile: "{{ item[1]['Interface Profile'] }}"
+        state: present
+        validate_certs: False
+      # the with items will take the variables file which includes a diciontary named APIC
+            # the with_nested items will take the variables files and iterate through them
+      with_nested: 
+        - "{{ apic_host[APIC] }}"
+        - "{{ leaf_switch_profiles[APIC] }}"
+      delegate_to: localhost  
+      
+# Create the leaf switch interface profile map to interface selectors 
+# HUGE NOTE: the module used here will be deprecated in ansible 2.12 BUT there was an outstanding issue 
+# where the task did NOT create the leaf_port_blk if it didn't exist and the only way I could find
+# to create them ahead of time was using the aci_rest module direct which I wanted to avoid for this
+    - name: Creating leaf switch interface profile and then mapping interface selectors (ports) to it
+      aci_access_port_to_interface_policy_leaf_profile:
+        host: "{{ item[0]['APIC OOB Address'] }}"
+        username: "{{ item[0]['Username'] }}"
+        password: "{{ item[0]['Password'] }}"
+        leaf_interface_profile: "{{ item[1]['Interface Profile'] }}"
+        access_port_selector: "PORT_{{ item[1]['Starting Port'] }}_{{ item[1]['Ending Port'] }}"
+        leaf_port_blk: "LEAF_PORT_{{ item[1]['Starting Port'] }}_{{ item[1]['Ending Port'] }}"
+        from_port: "{{ item[1]['Starting Port'] }}"
+        to_port: "{{ item[1]['Ending Port'] }}"
+        policy_group: "{{ item[1]['Interface Policy Group'] }}"
+        state: present
+        validate_certs: False
+      # the with items will take the variables file which includes a diciontary named APIC
+            # the with_nested items will take the variables files and iterate through them
+      with_nested: 
+        - "{{ apic_host[APIC] }}"
+        - "{{ leaf_switch_profiles[APIC] }}"
+      delegate_to: localhost  
+
+# Create leaf switch profile to interface selector profile mapping 
+    - name: Creating leaf switch profile to interface selector profile mapping
+      aci_interface_selector_to_switch_policy_leaf_profile:
+        host: "{{ item[0]['APIC OOB Address'] }}"
+        username: "{{ item[0]['Username'] }}"
+        password: "{{ item[0]['Password'] }}"
+        leaf_profile: "{{ item[1]['Switch Profile'] }}"
+        interface_selector: "{{ item[1]['Interface Profile'] }}"
+        state: present
+        validate_certs: False
+      # the with items will take the variables file which includes a diciontary named APIC
+            # the with_nested items will take the variables files and iterate through them
+      with_nested: 
+        - "{{ apic_host[APIC] }}"
+        - "{{ leaf_switch_profiles[APIC] }}"
+      delegate_to: localhost  

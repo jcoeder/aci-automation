@@ -1,0 +1,4 @@
+---
+- name: echo some things
+  debug:
+    msg: "{{ APIC }}"

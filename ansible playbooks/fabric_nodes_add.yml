@@ -1,7 +1,4 @@
 ---
-- hosts: localhost
-  connection: local
-  tasks:
 # Pull in the variable list section, this includes TWO variable files and gives them a name.  A with_nested section iterates over each of them later
 # in the with_nested section it puts the results into a list called 'item'. From the apic_host['APIC'] that is called first in with_nested
 # that goes into the list entry item[0] and the vlan_pool['APIC'] goes into item[1]
@@ -17,7 +14,10 @@
       include_vars:
         file: "ansible variables/bgp_route_reflectors_variables.yml"
         name: bgp_route_reflectors
-        
+    - name: include fourth variables file
+      include_vars:
+        file: "ansible variables/ntp_pod_policy_variables.yml"
+        name: ntp_pod_policy
 # Creation of fabric switches section
     - name: Add fabric nodes
       aci_fabric_node:
@@ -33,8 +33,8 @@
       # the with items will take the variables file which includes a diciontary named APIC
             # the with_nested items will take the variables files and iterate through them
       with_nested: 
-        - "{{ apic_host['APIC'] }}"
-        - "{{ fabric_nodes['APIC'] }}"
+        - "{{ apic_host[APIC] }}"
+        - "{{ fabric_nodes[APIC] }}"
       delegate_to: localhost
 
 # Creation of BGP Internal ASN, this only works for the intial push afterwards you'll get an error saying default as already exists
@@ -56,8 +56,8 @@
       # the with items will take the variables file which includes a diciontary named APIC
             # the with_nested items will take the variables files and iterate through them
       with_nested: 
-        - "{{ apic_host['APIC'] }}"
-        - "{{ bgp_route_reflectors['APIC'] }}"
+        - "{{ apic_host[APIC] }}"
+        - "{{ bgp_route_reflectors[APIC] }}"
       ignore_errors: yes
       delegate_to: localhost
       
@@ -81,8 +81,8 @@
       # the with items will take the variables file which includes a diciontary named APIC
             # the with_nested items will take the variables files and iterate through them
       with_nested: 
-        - "{{ apic_host['APIC'] }}"
-        - "{{ bgp_route_reflectors['APIC'] }}"
+        - "{{ apic_host[APIC] }}"
+        - "{{ bgp_route_reflectors[APIC] }}"
       ignore_errors: yes
       delegate_to: localhost
       
@@ -106,8 +106,71 @@
       # the with items will take the variables file which includes a diciontary named APIC
             # the with_nested items will take the variables files and iterate through them
       with_nested: 
-        - "{{ apic_host['APIC'] }}"
-        - "{{ fabric_nodes['APIC'] }}"
+        - "{{ apic_host[APIC] }}"
+        - "{{ fabric_nodes[APIC] }}"
       ignore_errors: yes
       delegate_to: localhost
 
+# Set ISIS default Pod Policy 
+    - name: Set ISIS Redistributed Metric to 62
+      aci_rest:
+            host: "{{ item[0]['APIC OOB Address'] }}"
+            username: "{{ item[0]['Username'] }}"
+            password: "{{ item[0]['Password'] }}"
+            path: /api/node/mo/uni/fabric/isisDomP-default.json
+            method: post
+            content: {"isisDomPol":{"attributes":{"dn":"uni/fabric/isisDomP-default","redistribMetric":"62"},"children":[]}}
+            validate_certs: False
+      # the with items will take the variables file which includes a diciontary named APIC
+            # the with_nested items will take the variables files and iterate through them
+      with_nested: 
+        - "{{ apic_host[APIC] }}"
+        - "{{ fabric_nodes[APIC] }}"
+      ignore_errors: yes
+      delegate_to: localhost
+      
+# Set NTP Pod Policies
+    - name: Set NTP Pod Policy
+      aci_rest:
+            host: "{{ item[0]['APIC OOB Address'] }}"
+            username: "{{ item[0]['Username'] }}"
+            password: "{{ item[0]['Password'] }}"
+            path: /api/node/mo/uni/fabric/time-{{ item[1]['Policy Name'] }}.json
+            method: post
+            content: {"datetimePol":
+                        {"attributes":
+                            {"dn":"uni/fabric/time-{{ item[1]['Policy Name'] }}",
+                             "name":"{{ item[1]['Policy Name'] }}",
+                             "rn":"time-{{ item[1]['Policy Name'] }}",
+                             "status":"created"
+                            },
+                         "children":[
+                            {"datetimeNtpProv":
+                                {"attributes":
+                                    {"dn":"uni/fabric/time-{{ item[1]['Policy Name'] }}/ntpprov-{{ item[1]['NTP Server'] }}",
+                                     "name":"{{ item[1]['NTP Server'] }}",
+                                     "rn":"ntpprov-{{ item[1]['NTP Server'] }}",
+                                     "status":"created"
+                                    },
+                                 "children":[
+                                    {"datetimeRsNtpProvToEpg":{
+                                        "attributes":{
+                                            "tDn":"uni/tn-mgmt/mgmtp-default/oob-{{ item[1]['EPG'] }}",
+                                            "status":"created"
+                                            },
+                                        "children":[]
+                                        }}
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            validate_certs: False
+      # the with items will take the variables file which includes a diciontary named APIC
+            # the with_nested items will take the variables files and iterate through them
+      with_nested: 
+        - "{{ apic_host[APIC] }}"
+        - "{{ ntp_pod_policy[APIC] }}"
+      ignore_errors: yes
+      delegate_to: localhost

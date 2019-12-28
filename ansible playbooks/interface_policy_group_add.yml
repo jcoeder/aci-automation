@@ -1,10 +1,7 @@
 ---
-- hosts: localhost
-  connection: local
-  tasks:
 # Pull in the variable list section, this includes TWO variable files and gives them a name.  A with_nested section iterates over each of them later
-# in the with_nested section it puts the results into a list called 'item'. From the apic_host['APIC'] that is called first in with_nested
-# that goes into the list entry item[0] and the vlan_pool['APIC'] goes into item[1]
+# in the with_nested section it puts the results into a list called 'item'. From the apic_host[APIC] that is called first in with_nested
+# that goes into the list entry item[0] and the vlan_pool[APIC] goes into item[1]
     - name: include apic host variables file 
       include_vars:
         file: "ansible variables/apic_host_ip_variables.yml"
@@ -37,8 +34,8 @@
         state: present
       # the with_nested items will take the variables files and iterate through them
       with_nested: 
-        - "{{ apic_host['APIC'] }}"
-        - "{{ ipg['APIC'] }}"
+        - "{{ apic_host[APIC] }}"
+        - "{{ ipg[APIC] }}"
       delegate_to: localhost
       
 # Build Interface Policy Groups Section
@@ -61,6 +58,6 @@
         state: present
       # the with_nested items will take the variables files and iterate through them
       with_nested: 
-        - "{{ apic_host['APIC'] }}"
-        - "{{ vpc_ipg['APIC'] }}"
+        - "{{ apic_host[APIC] }}"
+        - "{{ vpc_ipg[APIC] }}"
       delegate_to: localhost
