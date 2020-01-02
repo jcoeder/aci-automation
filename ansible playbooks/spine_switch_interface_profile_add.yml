@@ -1,0 +1,132 @@
+---
+# Pull in the variable list section
+    - name: include apic host variables file 
+      include_vars:
+        file: "ansible variables/apic_host_ip_variables.yml"
+        name: apic_host
+    - name: include leaf switch profiles variables file
+      include_vars: 
+        file: "ansible variables/spine_switch_profiles_variables.yml"
+        name: spine_switch_profiles
+
+# Create the spine interface selector profiles
+    - name: Add Spine Interface Selector Profiles
+      aci_rest:
+        host: "{{ item[0]['APIC OOB Address'] }}"
+        username: "{{ item[0]['Username'] }}"
+        password: "{{ item[0]['Password'] }}"
+        path: /api/node/mo/uni/infra/spaccportprof-{{ item[1]['Interface Profile'] }}.json
+        method: post
+        content: {
+          "infraSpAccPortP": {
+            "attributes": {
+              "dn": "uni/infra/spaccportprof-{{ item[1]['Interface Profile'] }}",
+              "name": "{{ item[1]['Interface Profile'] }}",
+              "rn": "spaccportprof-{{ item[1]['Interface Profile'] }}",
+              "status": "created,modified"
+            },
+            "children": [
+              {
+                "infraSHPortS": {
+                  "attributes": {
+                    "dn": "uni/infra/spaccportprof-{{ item[1]['Interface Profile'] }}/shports-PORT_{{ item[1]['Starting Port'] }}_{{ item[1]['Ending Port'] }}-typ-range",
+                    "name": "PORT_{{ item[1]['Starting Port'] }}_{{ item[1]['Ending Port'] }}",
+                    "rn": "shports-PORT_{{ item[1]['Starting Port'] }}_{{ item[1]['Ending Port'] }}-typ-range",
+                    "status": "created,modified"
+                  },
+                  "children": [
+                    {
+                      "infraPortBlk": {
+                        "attributes": {
+                          "dn": "uni/infra/spaccportprof-{{ item[1]['Interface Profile'] }}/shports-PORT_{{ item[1]['Starting Port'] }}_{{ item[1]['Ending Port'] }}-typ-range/portblk-block2",
+                          "fromPort": "{{ item[1]['Starting Port'] }}",
+                          "toPort": "{{ item[1]['Ending Port'] }}",
+                          "name": "block{{ item[1]['Starting Port'] }}_{{ item[1]['Ending Port'] }}",
+                          "rn": "portblk-block{{ item[1]['Starting Port'] }}_{{ item[1]['Ending Port'] }}",
+                          "status": "created,modified"
+                        },
+                        "children": []
+                      }
+                    },
+                    {
+                      "infraRsSpAccGrp": {
+                        "attributes": {
+                          "tDn": "uni/infra/funcprof/spaccportgrp-{{ item[1]['Interface Policy Group'] }}",
+                          "status": "created,modified"
+                        },
+                        "children": []
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ignore_errors: yes
+      with_nested: 
+        - "{{ apic_host[APIC] }}"
+        - "{{ spine_switch_profiles[APIC] }}"
+      delegate_to: localhost
+      
+# Create the spine switch selector profiles and map to the spine interface selector profiles 
+    - name: Add Spine Switch Selector Profiles
+      aci_rest:
+        host: "{{ item[0]['APIC OOB Address'] }}"
+        username: "{{ item[0]['Username'] }}"
+        password: "{{ item[0]['Password'] }}"
+        path: /api/node/mo/uni/infra/spprof-{{ item[1]['Switch Profile'] }}.json
+        method: post
+        content: {
+          "infraSpineP": {
+            "attributes": {
+              "dn": "uni/infra/spprof-{{ item[1]['Switch Profile'] }}",
+              "name": "{{ item[1]['Switch Profile'] }}",
+              "rn": "spprof-{{ item[1]['Switch Profile'] }}",
+              "status": "created,modified"
+            },
+            "children": [
+              {
+                "infraSpineS": {
+                  "attributes": {
+                    "dn": "uni/infra/spprof-{{ item[1]['Switch Profile'] }}/spines-{{ item[1]['Switch Selector'] }}-typ-range",
+                    "type": "range",
+                    "name": "{{ item[1]['Switch Selector'] }}",
+                    "rn": "spines-{{ item[1]['Switch Selector'] }}-typ-range",
+                    "status": "created"
+                  },
+                  "children": [
+                    {
+                      "infraNodeBlk": {
+                        "attributes": {
+                          "dn": "uni/infra/spprof-{{ item[1]['Switch Profile'] }}/spines-{{ item[1]['Switch Selector'] }}-typ-range/nodeblk-{{ item[1]['Switch Profile'] }}_{{ item[1]['Node ID'] }}",
+                          "from_": "{{ item[1]['Node ID'] }}",
+                          "to_": "{{ item[1]['Node ID'] }}",
+                          "name": "{{ item[1]['Switch Profile'] }}_{{ item[1]['Node ID'] }}",
+                          "rn": "{{ item[1]['Switch Profile'] }}_{{ item[1]['Node ID'] }}",
+                          "status": "created"
+                        },
+                        "children": []
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "infraRsSpAccPortP": {
+                  "attributes": {
+                    "tDn": "uni/infra/spaccportprof-{{ item[1]['Interface Profile'] }}",
+                    "status": "created,modified"
+                  },
+                  "children": []
+                }
+              }
+            ]
+          }
+        }
+      ignore_errors: yes
+      with_nested: 
+        - "{{ apic_host[APIC] }}"
+        - "{{ spine_switch_profiles[APIC] }}"
+      delegate_to: localhost
+  
