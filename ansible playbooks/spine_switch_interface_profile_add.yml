@@ -15,6 +15,7 @@
         host: "{{ item[0]['APIC OOB Address'] }}"
         username: "{{ item[0]['Username'] }}"
         password: "{{ item[0]['Password'] }}"
+        validate_certs: False
         path: /api/node/mo/uni/infra/spaccportprof-{{ item[1]['Interface Profile'] }}.json
         method: post
         content: {
@@ -38,7 +39,7 @@
                     {
                       "infraPortBlk": {
                         "attributes": {
-                          "dn": "uni/infra/spaccportprof-{{ item[1]['Interface Profile'] }}/shports-PORT_{{ item[1]['Starting Port'] }}_{{ item[1]['Ending Port'] }}-typ-range/portblk-block2",
+                          "dn": "uni/infra/spaccportprof-{{ item[1]['Interface Profile'] }}/shports-PORT_{{ item[1]['Starting Port'] }}_{{ item[1]['Ending Port'] }}-typ-range/portblk-block{{ item[1]['Starting Port'] }}_{{ item[1]['Ending Port'] }}",
                           "fromPort": "{{ item[1]['Starting Port'] }}",
                           "toPort": "{{ item[1]['Ending Port'] }}",
                           "name": "block{{ item[1]['Starting Port'] }}_{{ item[1]['Ending Port'] }}",
@@ -75,6 +76,7 @@
         host: "{{ item[0]['APIC OOB Address'] }}"
         username: "{{ item[0]['Username'] }}"
         password: "{{ item[0]['Password'] }}"
+        validate_certs: False
         path: /api/node/mo/uni/infra/spprof-{{ item[1]['Switch Profile'] }}.json
         method: post
         content: {
@@ -103,7 +105,7 @@
                           "from_": "{{ item[1]['Node ID'] }}",
                           "to_": "{{ item[1]['Node ID'] }}",
                           "name": "{{ item[1]['Switch Profile'] }}_{{ item[1]['Node ID'] }}",
-                          "rn": "{{ item[1]['Switch Profile'] }}_{{ item[1]['Node ID'] }}",
+                          "rn": "nodeblk-{{ item[1]['Switch Profile'] }}_{{ item[1]['Node ID'] }}",
                           "status": "created"
                         },
                         "children": []

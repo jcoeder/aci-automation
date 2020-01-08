@@ -9,12 +9,13 @@
         file: "ansible variables/multisite_apic_variables.yml"
         name: multisite_apic
 
-# Create the spine interface selector profiles
-    - name: Add Spine Interface Selector Profiles
+# Create the fabric external connection policy
+    - name: Add Fabric External Connection Policy
       aci_rest:
         host: "{{ item[0]['APIC OOB Address'] }}"
         username: "{{ item[0]['Username'] }}"
         password: "{{ item[0]['Password'] }}"
+        validate_certs: False
         path: /api/node/mo/uni/tn-infra/fabricExtConnP-1.json
         method: post
         content: {
@@ -22,7 +23,7 @@
             "attributes": {
               "dn": "uni/tn-infra/fabricExtConnP-1",
               "id": "1",
-              "name": "{{ item[1]['Fabric External Connection Policy Name }}",
+              "name": "{{ item[1]['Fabric External Connection Policy Name'] }}",
               "rt": "extended:as2-nn4:5:16",
               "rn": "fabricExtConnP-1",
               "status": "created"

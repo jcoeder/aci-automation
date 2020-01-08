@@ -44,3 +44,25 @@
       with_items: "{{ site_list['SITE_LIST'] }}"
       loop_control:
         loop_var: site_name
+    - name: import playbook spine_switch_interface_profile_add
+      include: spine_switch_interface_profile_add.yml
+      vars:
+        APIC: "{{ site_name }}"
+      with_items: "{{ site_list['SITE_LIST'] }}"
+      loop_control:
+        loop_var: site_name
+    - name: build multisite fabric external profile
+      include: multisite_external_fabric_policy_add.yml
+      vars:
+        APIC: "{{ site_name }}"
+      with_items: "{{ site_list['SITE_LIST'] }}"
+      loop_control:
+        loop_var: site_name
+#### Here is where we get into MSO config ####
+    - name: build MSO site in the MSO controller
+      include: mso_site_add.yml
+      vars:
+        APIC: "{{ site_name }}"
+      with_items: "{{ site_list['SITE_LIST'] }}"
+      loop_control:
+        loop_var: site_name

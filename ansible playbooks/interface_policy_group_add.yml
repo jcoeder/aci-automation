@@ -14,6 +14,10 @@
       include_vars:
         file: "ansible variables/interface_policy_groups_variables.yml"
         name: ipg
+    - name: include spine interface group variables file
+      include_vars:
+        file: "ansible variables/spine_interface_policy_groups_variables.yml"
+        name: spine_ipg
         
 # Build Interface Policy Groups Section
     - name: Add all VLAN pools in the list under the AAEP Domain Pool sheet
@@ -60,4 +64,46 @@
       with_nested: 
         - "{{ apic_host[APIC] }}"
         - "{{ vpc_ipg[APIC] }}"
+      delegate_to: localhost
+      
+# Creation of Spine Interface Policy Groups
+    - name: Add Spine Interface Policy Groups
+      aci_rest:
+        host: "{{ item[0]['APIC OOB Address'] }}"
+        username: "{{ item[0]['Username'] }}"
+        password: "{{ item[0]['Password'] }}"
+        validate_certs: False
+        path: /api/node/mo/uni/infra/funcprof/spaccportgrp-{{ item[1]['Name'] }}.json
+        method: post
+        content: {"infraSpAccPortGrp":
+         {"attributes":
+          {"dn":"uni/infra/funcprof/spaccportgrp-{{ item[1]['Name'] }}",
+             "name":"{{ item[1]['Name'] }}",
+             "rn":"spaccportgrp-{{ item[1]['Name'] }}",
+             "status":"created"},
+            "children":[
+             {"infraRsHIfPol":
+              {"attributes":
+                 {"tnFabricHIfPolName":"{{ item[1]['Link Level Policy'] }}",
+                  "status":"created,modified"},
+                "children":[]}},
+                {"infraRsCdpIfPol":
+                 {"attributes":
+                  {"tnCdpIfPolName":"{{ item[1]['CDP Policy'] }}",
+                     "status":"created,modified"},
+                    "children":[]}},
+                    {"infraRsAttEntP":
+                     {"attributes":
+                      {"tDn":"uni/infra/attentp-{{ item[1]['AEP'] }}",
+                         "status":"created,modified"},
+                        "children":[]}
+                    }
+                ]
+            }
+          }
+      ignore_errors: yes
+      # the with_nested items will take the variables files and iterate through them
+      with_nested: 
+        - "{{ apic_host[APIC] }}"
+        - "{{ spine_ipg[APIC] }}"
       delegate_to: localhost

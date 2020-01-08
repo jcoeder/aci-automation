@@ -1,0 +1,27 @@
+---
+# Pull in info from the multisite_apic_variables.yml file 
+    - name: include leaf switch profiles variables file
+      include_vars: 
+        file: "ansible variables/multisite_apic_variables.yml"
+        name: multisite_apic
+# Build MSO Site
+    - name: Build MSO Sites
+      mso_site:
+        host: "{{ item['MSO IP'] }}"
+        username: "{{ item['MSO Username'] }}"
+        password: "{{ item['MSO Password'] }}"
+        validate_certs: no
+        use_ssl: yes
+        # APIC is the site name of the dictionary we loop through and is set at the master_playbook level on iterations
+        site: "{{ APIC }}"
+        apic_username: "{{ item['APIC Username'] }}"
+        apic_password: "{{ item['APIC Password'] }}"
+        apic_site_id: "{{ item['Site ID'] }}"
+        urls: 
+        - "https://{{ item['APIC OOB Address'] }}"
+        state: present
+      # the with items will take the variables file which includes a diciontary named APIC
+            # the with_nested items will take the variables files and iterate through them
+      with_items: "{{ multisite_apic[APIC] }}"
+      ignore_errors: yes
+      delegate_to: localhost
