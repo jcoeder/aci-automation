@@ -1,0 +1,72 @@
+---
+# Pull in the variable list section
+    - name: include apic host variables file 
+      include_vars:
+        file: "ansible variables/apic_host_ip_variables.yml"
+        name: apic_host
+    - name: include leaf switch profiles variables file
+      include_vars: 
+        file: "ansible variables/multisite_apic_variables.yml"
+        name: multisite_apic
+
+# Create the fabric external connection policy
+    - name: Add Fabric External Connection Policy
+      aci_rest:
+        host: "{{ item[0]['APIC OOB Address'] }}"
+        username: "{{ item[0]['Username'] }}"
+        password: "{{ item[0]['Password'] }}"
+        validate_certs: False
+        path: /api/node/mo/uni/tn-infra/fabricExtConnP-1.json
+        method: post
+        content: {
+          "fvFabricExtConnP": {
+            "attributes": {
+              "dn": "uni/tn-infra/fabricExtConnP-1",
+              "id": "1",
+              "name": "{{ item[1]['Fabric External Connection Policy Name'] }}",
+              "rt": "extended:as2-nn4:5:16",
+              "rn": "fabricExtConnP-1",
+              "status": "created"
+            },
+            "children": [
+              {
+                "fvPeeringP": {
+                  "attributes": {
+                    "dn": "uni/tn-infra/fabricExtConnP-1/peeringP",
+                    "rn": "peeringP",
+                    "status": "created"
+                  },
+                  "children": []
+                }
+              },
+              {
+                "fvPodConnP": {
+                  "attributes": {
+                    "dn": "uni/tn-infra/fabricExtConnP-1/podConnP-1",
+                    "rn": "podConnP-1",
+                    "status": "created"
+                  },
+                  "children": [
+                    {
+                      "fvIp": {
+                        "attributes": {
+                          "dn": "uni/tn-infra/fabricExtConnP-1/podConnP-1/ip-[{{ item[1]['DTEP Unicast'] }}/32]",
+                          "addr": "{{ item[1]['DTEP Unicast'] }}/32",
+                          "rn": "ip-[{{ item[1]['DTEP Unicast'] }}/32]",
+                          "status": "created"
+                        },
+                        "children": []
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ignore_errors: yes
+      with_nested: 
+        - "{{ apic_host[APIC] }}"
+        - "{{ multisite_apic[APIC] }}"
+      delegate_to: localhost
+  

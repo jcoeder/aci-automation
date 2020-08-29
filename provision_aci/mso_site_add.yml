@@ -1,0 +1,248 @@
+---
+# Pull in info from the multisite_apic_variables.yml file 
+    - name: include leaf switch profiles variables file
+      include_vars: 
+        file: "ansible variables/multisite_apic_variables.yml"
+        name: multisite_apic
+    - name: include the bgp variables file
+      include_vars:
+        file: "ansible variables/bgp_route_reflectors_variables.yml"
+        name: bgp_info
+    - name: include the bgp variables file
+      include_vars:
+        file: "ansible variables/mso_schemas_variables.yml"
+        name: mso_schemas
+        
+        
+# Build MSO Site
+    - name: Build MSO Sites
+      mso_site:
+        host: "{{ item['MSO IP'] }}"
+        username: "{{ item['MSO Username'] }}"
+        password: "{{ item['MSO Password'] }}"
+        validate_certs: no
+        use_ssl: yes
+        # APIC is the site name of the dictionary we loop through and is set at the master_playbook level on iterations
+        site: "{{ APIC }}"
+        labels:
+        - "{{ APIC }}" # optional
+        apic_username: "{{ item['APIC Username'] }}"
+        apic_password: "{{ item['APIC Password'] }}"
+        apic_site_id: "{{ item['Site ID'] }}"
+        urls: 
+        - "https://{{ item['APIC OOB Address'] }}"
+        location: # optional
+          latitude: 39.259630
+          longitude: -83.658690
+        use_ssl: yes
+        state: present
+      # the with items will take the variables file which includes a diciontary named APIC
+            # the with_nested items will take the variables files and iterate through them
+      with_items: "{{ multisite_apic[APIC] }}"
+      register: api_site_id_number
+      delegate_to: localhost
+    - debug:
+       var: api_site_id_number['results'][0]['current']['id']
+
+
+# Write to a file to store the site list
+    - name: write sites to file 
+      lineinfile:
+        path: ./site_temp_file.txt
+        line: "{
+              'id': '{{ api_site_id_number['results'][0]['current']['id'] }}',
+              'fabricId': 1,
+              'ospfAreaType': '{{ item[0]['OSPF Area Type'] }}',
+              'ospfAreaId': '{{ item[0]['OSPF Area ID'] }}',
+              'cloudSecEnabled': false,
+              'msiteDataPlaneMulticastTep': '{{ item[0]['DTEP Multicast'] }}',
+              'bgpPassword': '',
+              'bgpAsn': {{ item[1]['BGP AS'] }},
+              '_versionDefaulted': false,
+              'cloudRegions': [],
+              'ospfPolicies': [
+                {
+                  'priority': 1,
+                  'interfaceCost': 0,
+                  'networkType': 'point-to-point',
+                  'retransmitInterval': 5,
+                  'deadInterval': 40,
+                  'name': 'msc-ospf-policy-default',
+                  'interfaceControls': [],
+                  'transmitDelay': 1,
+                  'helloInterval': 10
+                },
+                {
+                  'priority': 1,
+                  'interfaceCost': 0,
+                  'networkType': 'unspecified',
+                  'retransmitInterval': 5,
+                  'deadInterval': 40,
+                  'name': 'common/default',
+                  'interfaceControls': [],
+                  'transmitDelay': 1,
+                  'helloInterval': 10
+                }
+              ],
+              'externalRoutedDomain': 'uni/l3dom-{{ item[0]['IPN Physical Domain'] }}',
+              'apicSiteId': {{ item[0]['Site ID'] | int }},
+              'name': '{{ item[0]['Site'] }}',
+              'msiteEnabled': true,
+              'pods': [
+                {
+                  'podId': 1,
+                  'name': 'pod-1',
+                  'msiteDataPlaneUnicastTep': '{{ item[0]['DTEP Unicast'] }}',
+                  'spines': [
+                    {
+                      'routeReflectorEnabled': true,
+                      'name': '{{ item[0]['Spine IPN Switch Name'] }}',
+                      'msiteControlPlaneTep': '{{ item[0]['Control Plane TEP'] }}',
+                      'bgpPeeringEnabled': true,
+                      'ports': [
+                        {
+                          'portId': '{{ item[0]['IPN Port Number'] }}',
+                          'ipAddress': '{{ item[0]['IPN Transport IP/CIDR'] }}',
+                          'mtu': '{{ item[0]['IPN MTU'] }}',
+                          'routingPolicy': 'msc-ospf-policy-default',
+                          'ospfAuthType': 'none'
+                        }
+                      ],
+                      'nodeId': {{ item[0]['Spine IPN Node ID'] }}
+                    }
+                  ],
+                  'msiteDataPlaneRoutableTEPPools': []
+                }
+              ]
+            }"
+        create: yes
+      with_nested:  
+        - "{{ multisite_apic[APIC] }}"
+        - "{{ bgp_info[APIC] }}"  
+        
+# Write to a file to store the site list for tenant use 
+    - name: write sites to file 
+      lineinfile:
+        path: ./tenant_site_temp_file.txt
+        line: "{ 'siteId': '{{ api_site_id_number['results'][0]['current']['id'] }}', 'securityDomains': [], 'cloudAccount': null, 'awsAccount': null, 'azureAccount': null }"
+        create: yes
+      with_nested:  
+        - "{{ multisite_apic[APIC] }}"
+        - "{{ bgp_info[APIC] }}"  
+        
+# Write to a file to store the site list for Schema site associations
+    - name: write sites to file 
+      lineinfile:
+        path: ./schema_to_site_association_temp_file_{{ item['Schema Name'] }}.txt
+        line: "{
+          'siteId': '{{ api_site_id_number['results'][0]['current']['id'] }}',
+          'templateName': 'Template1',
+          'externalEpgs': [],
+          'contracts': []
+        }"
+        create: yes
+      with_items: "{{ mso_schemas[APIC] }}"   
+        
+# Write to a file to store the site list for schema use 
+    - name: write sites to file 
+      lineinfile:
+        path: ./schema_site_temp_file.txt
+        line: "{ 'siteId': '{{ api_site_id_number['results'][0]['current']['id'] }}', 'templateName': 'Template1', 'externalEpgs': null, 'serviceGraphs': null }"
+        create: yes
+      with_nested:  
+        - "{{ multisite_apic[APIC] }}"
+        - "{{ bgp_info[APIC] }}"  
+        
+ 
+# Write to a file per Schema for VRF
+    - name: write vrf to file 
+      lineinfile:
+        path: ./schema_vrf_temp_file_{{ item['Schema Name'] }}.txt
+        line: "{
+          'displayName': '{{ item['VRF'] }}',
+          'name': '{{ item['VRF'] }}',
+          'vrfRef': '/templates/Template1/vrfs/{{ item['VRF'] }}',
+          'preferredGroup': false,
+          'vzAnyEnabled': false,
+          'vzAnyProviderContracts': [],
+          'vzAnyConsumerContracts': []
+        }"
+        create: yes
+      with_items: "{{ mso_schemas[APIC] }}"   
+
+# Write to a file per Schema for Bridge Domain 
+    - name: write bridge domain to file 
+      lineinfile:
+        path: ./schema_bridge_domain_temp_file_{{ item['Schema Name'] }}.txt
+        line: "{
+          'displayName': '{{ item['Bridge Domain'] }}',
+          'name': '{{ item['Bridge Domain'] }}',
+          'bdRef': '/templates/Template1/bds/{{ item['Bridge Domain'] }}',
+          'vrfRef': '/templates/Template1/vrfs/{{ item['VRF'] }}',
+          'l2Stretch': true,
+          'l2UnknownUnicast': 'proxy',
+          'subnets': [
+            {
+              'shared': true,
+              'scope': 'public',
+              'ip': '{{ item['Subnet IP and CIDR'] }}'
+            }
+           ]
+          }"
+        create: yes
+      with_items: "{{ mso_schemas[APIC] }}"  
+ 
+ 
+ # Write to a file per Schema for EPG
+    - name: write epg to file 
+      lineinfile:
+        path: ./schema_epg_temp_file_{{ item['Schema Name'] }}.txt
+        line: "{
+              'displayName': '{{ item['EPG Name'] }}',
+              'name': '{{ item['EPG Name'] }}',
+              'epgRef': '/templates/Template1/anps/{{ item['ANP Name'] }}/epgs/{{ item['EPG Name'] }}',
+              'bdRef': '/templates/Template1/bds/{{ item['Bridge Domain'] }}',
+              'vrfRef': '',
+              'uSegEpg': false,
+              'preferredGroup': false,
+              'contractRelationships': [],
+              'subnets': [],
+              'uSegAttrs': [],
+              'intraEpg': 'unenforced',
+              'proxyArp': false,
+              'selectors': []
+            }"
+        create: yes
+      with_items: "{{ mso_schemas[APIC] }}"   
+        
+ 
+        
+# Write to a file per Schema for ANP and also reference the EPG file!
+    - name: write anp to file for LAB_SCHEMA
+      copy:
+        content: {
+              'displayName': "{{ item['ANP Name'] }}",
+              'name': "{{ item['ANP Name'] }}",
+              'anpRef': "/templates/Template1/anps/{{ item['ANP Name'] }}",
+              'epgs': "{{ lookup('file',  'schema_epg_temp_file_LAB_SCHEMA.txt').split('\n') |regex_replace('\"', '') }}"
+            }
+        dest: "./schema_anp_temp_file_{{ item['Schema Name'] }}.txt"
+      with_items: "{{ mso_schemas[APIC] }}"     
+      delegate_to: localhost
+ 
+ # Write to a file per Schema for ANP and also reference the EPG file!
+    - name: write anp to file for BANK_SCHEMA
+      copy:
+        content: {
+              'displayName': "{{ item['ANP Name'] }}",
+              'name': "{{ item['ANP Name'] }}",
+              'anpRef': "/templates/Template1/anps/{{ item['ANP Name'] }}",
+              'epgs': "{{ lookup('file',  'schema_epg_temp_file_BANK_SCHEMA.txt').split('\n') |regex_replace('\"', '') }}"
+            }
+        dest: "./schema_anp_temp_file_{{ item['Schema Name'] }}.txt"
+      with_items: "{{ mso_schemas[APIC] }}"     
+      delegate_to: localhost
+
+
+
+

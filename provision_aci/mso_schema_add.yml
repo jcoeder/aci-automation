@@ -1,0 +1,145 @@
+---
+# Pull in info from the multisite_apic_variables.yml file 
+    - name: include multisite apic variables file 
+      include_vars: 
+        file: "ansible variables/multisite_apic_variables.yml"
+        name: multisite_apic
+    - name: include the mso schemas 
+      include_vars:
+        file: "ansible variables/mso_schemas_variables.yml"
+        name: mso_schemas
+        
+
+# Get the Tenant internal ID to use in API calls to build Schemas
+    - name: Get Tenant ID
+      mso_tenant:
+        host: "{{ multisite_apic[APIC][0]['MSO IP'] }}"
+        username: "{{ multisite_apic[APIC][0]['MSO Username'] }}"
+        password: "{{ multisite_apic[APIC][0]['MSO Password'] }}"
+        validate_certs: no
+        use_ssl: yes
+        tenant: "{{ item['Tenant Name'] }}"
+        state: query
+      with_items: "{{ mso_schemas[APIC] }}"
+      register: tenant_id_output
+      
+    - debug:
+        var: tenant_id_output
+  
+
+# Get our auth token
+    - name: Get authentication token
+      uri:
+        url: "https://{{ item['MSO IP'] }}/api/v1/auth/login"
+        method: POST
+        body_format: json
+        body: {"username":"{{ item['MSO Username'] }}","password":"{{ item['MSO Password'] }}"}
+        return_content: yes
+        status_code: 201
+        validate_certs: no
+      register: token
+      with_items: "{{ multisite_apic[APIC] }}"
+
+# Build BANK_SCHEMA MSO Schema 
+    - name: Configure Schema BANK_SCHEMA
+      uri:
+        url: "https://{{ multisite_apic[APIC][0]['MSO IP'] }}/mso/api/v1/schemas"
+        method: POST
+        headers:
+            Authorization: "Bearer {{ token['results'][0]['json']['token'] }}"
+        # HUGE NOTE HERE: the quoting is extremely important so that objects are passed as strings when needed or numbers when not 
+        # Also the regex_replace is important as lookup and split wrap the list in double quotes which the api call won't accept
+        body: {
+          'displayName': 'BANK_SCHEMA',
+          'templates': [
+            {
+              'name': 'Template1',
+              'tenantId': "{{ item[1]['current']['id'] }}",
+              'displayName': 'Template 1',
+              'anps': [
+                {
+                  'displayName': 'WEB_SERVERS_ANP',
+                  'name': 'WEB_SERVERS_ANP',
+                  'anpRef': '/templates/Template1/anps/WEB_SERVERS_ANP',
+                  'epgs':  "{{ lookup('file',  'schema_epg_temp_file_BANK_SCHEMA.txt').split('\n') |regex_replace('\"', '') }}",
+                }
+              ],
+              'contracts': [],
+              'vrfs': "{{ lookup('file',  'schema_vrf_temp_file_BANK_SCHEMA.txt').split('\n') |regex_replace('\"', '') }}",
+              'bds': "{{ lookup('file',  'schema_bridge_domain_temp_file_BANK_SCHEMA.txt').split('\n') |regex_replace('\"', '') }}",
+              'filters': [],
+              'sites': "{{ lookup('file',  'schema_to_site_association_temp_file_BANK_SCHEMA.txt').split('\n') |regex_replace('\"', '') }}",
+              'externalEpgs': [],
+              'serviceGraphs': [],
+              'intersiteL3outs': []
+            }
+          ],
+          'sites': [],
+          '_updateVersion': 1
+        }
+        return_content: yes
+        status_code:
+          - 200
+          - 201
+        body_format: json
+        validate_certs: no
+      register: result
+      # Only do the initial register when the Tenant Name is equal to the Name of the Tenant ID 
+      when: item[1]['current']['name'] == "BANK_CUSTOMER_TENANT"
+      with_nested: 
+        - "{{ mso_schemas[APIC] }}"
+        - "{{ tenant_id_output.results }}"        
+      ignore_errors: yes
+
+
+# Build LAB_SCHEMA
+    - name: Configure Schema LAB_SCHEMA
+      uri:
+        url: "https://{{ multisite_apic[APIC][0]['MSO IP'] }}/mso/api/v1/schemas"
+        method: POST
+        headers:
+            Authorization: "Bearer {{ token['results'][0]['json']['token'] }}"
+        # HUGE NOTE HERE: the quoting is extremely important so that objects are passed as strings when needed or numbers when not 
+        # Also the regex_replace is important as lookup and split wrap the list in double quotes which the api call won't accept
+        body: {
+          'displayName': 'LAB_SCHEMA',
+          'templates': [
+            {
+              'name': 'Template1',
+              'tenantId': "{{ item[1]['current']['id'] }}",
+              'displayName': 'Template 1',
+              'anps': [
+                {
+                  'displayName': 'WEB_SERVERS_ANP',
+                  'name': 'WEB_SERVERS_ANP',
+                  'anpRef': '/templates/Template1/anps/WEB_SERVERS_ANP',
+                  'epgs':  "{{ lookup('file',  'schema_epg_temp_file_LAB_SCHEMA.txt').split('\n') |regex_replace('\"', '') }}",
+                }
+              ],
+              'contracts': [],
+              'vrfs': "{{ lookup('file',  'schema_vrf_temp_file_LAB_SCHEMA.txt').split('\n') |regex_replace('\"', '') }}",
+              'bds': "{{ lookup('file',  'schema_bridge_domain_temp_file_LAB_SCHEMA.txt').split('\n') |regex_replace('\"', '') }}",
+              'filters': [],
+              'sites': "{{ lookup('file',  'schema_to_site_association_temp_file_LAB_SCHEMA.txt').split('\n') |regex_replace('\"', '') }}",
+              'externalEpgs': [],
+              'serviceGraphs': [],
+              'intersiteL3outs': []
+            }
+          ],
+          'sites': [],
+          '_updateVersion': 1
+        }
+        return_content: yes
+        status_code:
+          - 200
+          - 201
+        body_format: json
+        validate_certs: no
+      register: result
+      # Only do the initial register when the Tenant Name is equal to the Name of the Tenant ID 
+      when: item[1]['current']['name'] == "LAB_TENANT"
+      with_nested: 
+        - "{{ mso_schemas[APIC] }}"
+        - "{{ tenant_id_output.results }}"        
+      ignore_errors: yes
+    

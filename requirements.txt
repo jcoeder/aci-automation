@@ -1,0 +1,20 @@
+serial
+ansible==2.9
+paramiko
+scp
+netmiko
+pexpect
+requests
+PyVmomi
+et-xmlfile==1.0.1
+future==0.18.2
+jdcal==1.4.1
+openpyxl==3.0.2
+pkg-resources==0.0.0
+PyYAML==5.2
+xl2dict==0.1.5
+xlrd==1.2.0
+<<<<<<< HEAD
+=======
+getpass
+>>>>>>> 903319378d40a1f7e37df83749c848f5cd23810d

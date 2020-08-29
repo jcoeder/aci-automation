@@ -1,0 +1,17 @@
+---
+- name: Get MSO Bearer
+  hosts: mso-1
+
+  tasks:
+  - name: Log into MSO and register token
+    uri:
+      url: https://{{ ansible_host }}/api/v1/auth/login
+      method: POST
+      body_format: json
+      body: {"username":"{{ username }}","password":"{{ password }}"}
+      return_content: yes
+      status_code: 201
+      validate_certs: no
+    register: token
+#  - debug:
+#      var: token["json"]["token"]

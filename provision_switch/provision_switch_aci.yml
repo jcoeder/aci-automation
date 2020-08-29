@@ -1,0 +1,40 @@
+# Update:
+# Inventory username and password
+# Filename
+# remote_file directory
+# file_pull_timeout if you are on a slow connection
+---
+- name: Configure Switch for ACI and reboot
+  hosts: nxos
+  gather_facts: false
+
+# This module doesnt understand host vars??
+  vars:
+    - ansible_user: "{{ username }}"
+    - ansible_password: "{{ password }}"
+    - filename: "aci-n9000-dk9.14.2.2f.bin"
+
+  tasks:
+  - name: "Initiate SCP file copy from device"
+    nxos_file_copy:
+      nxos_file_copy:
+      file_pull: True
+      file_pull_timeout: 3600
+      local_file: "{{ filename }}"
+      remote_file: "/home/justin/aci-ansible/{{ filename }}"
+      remote_scp_server: "172.31.88.30"
+      remote_scp_server_user: "justin"
+      remote_scp_server_password: "PASSWORD"
+      vrf: "management"
+
+  - name: Disable NXOS boot
+    nxos_config:
+      lines: "no boot nxos"
+      save_when: modified
+
+  - name: Set ACI boot with python script
+    command: python set_boot.py {{ ansible_host }} {{ username }} {{ password }} {{ filename }}
+
+  - name: Reboot device
+    nxos_reboot:
+      confirm: true

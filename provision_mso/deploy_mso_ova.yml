@@ -1,0 +1,49 @@
+# Uploads 3 copies of the MSC ova file
+# Does not require a host file.  Uses implicit localhost
+# Each file is about 4.5GB.  Allows user to multitask
+---
+- name: Deploy ACI MSO OVAs
+  hosts: localhost
+  gather_facts: false
+
+  vars_prompt:
+  - name: "hostname"
+    prompt: "IP address of ESX host or vCenter host"
+    private: false
+  - name: "username"
+    prompt: "Username for ESX host or vCenter host"
+    default: "root"
+    private: false
+  - name: "password"
+    prompt: "Password to ESX host or vCenter host"
+  - name: "filename"
+    prompt: "OVA Filename"
+    default: "esx-msc-2.2.3i.ova"
+    private: false
+  - name: "network"
+    prompt: "Name of network to place OVA on.  Default is 'VM Network'"
+    default: "VM Network"
+    private: false
+
+#  vars:
+#    hostname: "{{ host }}"      # Esxi or vcenter hostname
+#    username: "{{ username }}"  # Esxi or vcenter username
+#    password: "{{ password }}"  # Esxi or vcenter password
+#    filename: "{{ filename }}"  # OVA file location
+
+  tasks:
+  - name: Deploy ACI MSO OVAs
+    vmware_deploy_ovf:
+      hostname: '{{ hostname }}'   # Esxi or vcenter hostname
+      username: '{{ username }}'   # Esxi or vcenter username
+      password: '{{ password }}'   # Esxi or vcenter password
+      ovf: '{{ filename }}'
+      wait: false
+      networks: "{u'VM Network':u'{{ network }}'}"
+      name: "{{ item }}"
+      validate_certs: false
+      power_on: true
+    with_items:
+      - msc-node1
+      - msc-node2
+      - msc-node3

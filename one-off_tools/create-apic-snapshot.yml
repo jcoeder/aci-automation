@@ -1,0 +1,12 @@
+---
+- name: Create APIC Snapshot
+  hosts: APIC-1
+
+  tasks:
+  - aci_config_snapshot:
+      host: "{{ ansible_host }}"
+      username: "{{ ansible_user }}"
+      password: "{{ ansible_password }}"
+      export_policy: config_backup
+      state: present
+    delegate_to: localhost

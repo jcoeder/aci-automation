@@ -1,0 +1,35 @@
+---
+# Pull in info from the multisite_apic_variables.yml file 
+    - name: include leaf switch profiles variables file
+      include_vars: 
+        file: "ansible variables/multisite_apic_variables.yml"
+        name: multisite_apic
+    - name: include the bgp variables file
+      include_vars:
+        file: "ansible variables/mso_schemas_variables.yml"
+        name: mso_schemas
+
+# Build MSO Site
+    - name: Build MSO Schema ANP
+      mso_schema:
+        host: "{{ multisite_apic[APIC]['MSO IP'] }}"
+        username: "{{ multisite_apic[APIC]['MSO Username'] }}"
+        password: "{{ multisite_apic[APIC]['MSO Password'] }}"
+        validate_certs: no
+        use_ssl: yes
+        # APIC is the site name of the dictionary we loop through and is set at the master_playbook level on iterations
+        schema: "{{ item['Schema Name'] }}"
+        templates:
+        - name: Template1
+          displayName: "{{ item['Schema Name'] }}"
+          tenantId: "{{ item['Schema Name'] }}"
+          anps:
+            "{{ item['ANP Name'] }}"
+        state: present
+      # the with items will take the variables file which includes a diciontary named APIC
+            # the with_nested items will take the variables files and iterate through them
+      with_items: "{{ mso_schemas[APIC] }}"
+      register: api_site_id_number
+      delegate_to: localhost
+    - debug:
+       var: api_site_id_number['results'][0]['current']['id']

@@ -1,0 +1,40 @@
+---
+- hosts: mso_followers
+  gather_facts: false
+  
+  vars:
+    file: output_file.txt
+    swarm_file: swarm_output_file.txt
+    ansible_user: root
+    ansible_ssh_pass: PASSWORD
+#    ansible_python_interpreter: venv/bin/python
+  
+  tasks:
+# Set VM hostname to meet Cisco requirements    
+  - name: Set system hostname
+    hostname:
+      name: "{{ inventory_hostname }}"
+      
+# Import variable file
+  - name: get mso version
+    include_vars:
+      file: "swarm_leader_output.json"
+      name: swarm_leader_output
+      
+# Get version of the MSO build to use later
+  - name: get version of the build 
+    command: "ls /opt/cisco/msc/builds/"
+    register: mso_version
+    
+# Build the followers    
+  - name: join docker swarm as follower
+    shell: "/opt/cisco/msc/builds/{{ mso_version.stdout }}/prodha/msc_cfg_join.py {{ swarm_leader_output['value'] }}"
+    register: results
+    
+# Remove file when done    
+  - name: remove json file
+    file:
+      path: "swarm_leader_output.json"
+      state: absent
+    delegate_to: localhost
+   

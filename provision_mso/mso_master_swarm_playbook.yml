@@ -1,0 +1,5 @@
+---
+  - import_playbook: mso_leader_swarm_build.yml
+  - import_playbook: mso_followers_swarm_build.yml
+  - import_playbook: mso_deploy_swarm_cluster.yml
+  - import_playbook: update_mso_admin_password.yml

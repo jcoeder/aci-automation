@@ -1,0 +1,132 @@
+---
+# Pull in the variable list section, this includes TWO variable files and gives them a name.  A with_nested section iterates over each of them later
+# in the with_nested section it puts the results into a list called 'item'. From the apic_host[APIC] that is called first in with_nested
+# that goes into the list entry item[0] and the vlan_pool['APIC'] goes into item[1]
+    - name: include first variables file
+      include_vars: 
+        file: "ansible variables/aaep_vlan_pool_physical_domain_variables.yml"
+        name: vlan_pool
+    - name: include second variables file
+      include_vars:
+        file: "ansible variables/apic_host_ip_variables.yml"
+        name: apic_host
+        
+# Build VLAN pools section
+    - name: Add all VLAN pools in the list under the AAEP Domain Pool sheet
+      aci_vlan_pool:
+        # the "item[0]" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item[0]['APIC OOB Address'] }}"
+        username: "{{  item[0]['Username'] }}"
+        password: "{{  item[0]['Password'] }}"
+        validate_certs: False
+        pool: "{{ item[1]['VLAN Pool'] }}"
+        pool_allocation_mode: "{{ item[1]['VLAN Pool Type'] }}"
+        state: present
+      # the with_nested items will take the variables files and iterate through them
+      with_nested: 
+        - "{{ apic_host[APIC] }}"
+        - "{{ vlan_pool[APIC] }}"
+      delegate_to: localhost
+      
+# Build VLAN Pool Encap Block Section
+    - name: Add all VLAN Encap blocks to VLAN Pools under the AAEP Domain Pool sheet
+      aci_vlan_pool_encap_block:
+        # the "item[0]" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item[0]['APIC OOB Address'] }}"
+        username: "{{  item[0]['Username'] }}"
+        password: "{{  item[0]['Password'] }}"
+        validate_certs: False
+        pool: "{{ item[1]['VLAN Pool'] }}"
+        # allocation_mode is the VLAN Encap block allocation type since it doesn't have to match
+        allocation_mode: "{{ item[1]['VLAN Pool Type'] }}"
+        # we must specify the VLAN Pool's allocation mode when specifying the pool name 
+        pool_allocation_mode: "{{ item[1]['VLAN Pool Type'] }}"
+        block_name: "vlan_{{ item[1]['Vlan Encap Block Start'] }}_{{ item[1]['Vlan Encap Block End'] }}"
+        block_start: "{{ item[1]['Vlan Encap Block Start'] }}"
+        block_end: "{{ item[1]['Vlan Encap Block End'] }}"
+        state: present
+      # the with_nested items will take the variables files and iterate through them
+      with_nested: 
+        - "{{ apic_host[APIC] }}"
+        - "{{ vlan_pool[APIC] }}"
+      delegate_to: localhost
+      
+# Build Physical Domains
+    - name: Add all Physical Domains under the AAEP Domain Pool sheet
+      aci_domain:
+        # the "item[0]" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item[0]['APIC OOB Address'] }}"
+        username: "{{  item[0]['Username'] }}"
+        password: "{{  item[0]['Password'] }}"
+        validate_certs: False
+        domain: "{{ item[1]['Physical/External Domain'] }}"
+        domain_type: "{{ item[1]['Domain Type'] }}"
+        state: present
+      # the with_nested items will take the variables files and iterate through them
+      with_nested: 
+        - "{{ apic_host[APIC] }}"
+        - "{{ vlan_pool[APIC] }}"
+      delegate_to: localhost
+      
+# Associate VLAN Pools to Physical Domains
+    - name: Bind a physical domain to VLAN pool
+      aci_domain_to_vlan_pool:
+        # the "item[0]" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item[0]['APIC OOB Address'] }}"
+        username: "{{  item[0]['Username'] }}"
+        password: "{{  item[0]['Password'] }}"
+        validate_certs: False
+        domain: "{{ item[1]['Physical/External Domain'] }}"
+        domain_type: "{{ item[1]['Domain Type'] }}"
+        pool: "{{ item[1]['VLAN Pool'] }}"
+        pool_allocation_mode: "{{ item[1]['VLAN Pool Type'] }}"
+        state: present
+      delegate_to: localhost
+      # the with_nested items will take the variables files and iterate through them
+      with_nested: 
+        - "{{ apic_host[APIC] }}"
+        - "{{ vlan_pool[APIC] }}"
+      delegate_to: localhost
+
+# Create Attachable Access Entity Profile AAEP
+    - name: Add all the AEPs in the excel sheet
+      aci_aep:
+        host: "{{ item[0]['APIC OOB Address'] }}"
+        username: "{{  item[0]['Username'] }}"
+        password: "{{  item[0]['Password'] }}"
+        validate_certs: False
+        aep: "{{  item[1]['AEP'] }}"
+        state: present
+      delegate_to: localhost
+      # the with_nested items will take the variables files and iterate through them
+      with_nested: 
+        - "{{ apic_host[APIC] }}"
+        - "{{ vlan_pool[APIC] }}"
+      delegate_to: localhost
+      
+# Attach AAEPs to Physical Domains (which in turn links them to VLAN pools)
+    - name: Add all the AEPs in the excel sheet
+      aci_aep_to_domain:
+        host: "{{ item[0]['APIC OOB Address'] }}"
+        username: "{{  item[0]['Username'] }}"
+        password: "{{  item[0]['Password'] }}"
+        validate_certs: False
+        aep: "{{  item[1]['AEP'] }}"
+        domain: "{{ item[1]['Physical/External Domain'] }}"
+        domain_type: "{{ item[1]['Domain Type'] }}"
+        state: present
+      delegate_to: localhost
+      # the with_nested items will take the variables files and iterate through them
+      with_nested: 
+        - "{{ apic_host[APIC] }}"
+        - "{{ vlan_pool[APIC] }}"
+      delegate_to: localhost
+
+
+
+
+
+
+
+
+      

@@ -1,0 +1,32 @@
+---
+- name: Create MSO Backup
+  hosts: mso-1
+
+  tasks:
+  - name: Log into MSO
+    uri:
+      url: https://{{ ansible_host }}/api/v1/auth/login
+      method: POST
+      body_format: json
+      body: {"username":"{{ username }}","password":"{{ password }}"}
+      return_content: yes
+      status_code: 201
+      validate_certs: no
+    register: token
+#  - debug:
+#      var: token["json"]["token"]
+
+  - name: Create MSO Backup
+    uri:
+      url: https://{{ ansible_host }}/api/v1/backups
+      method: POST
+      headers:
+        Authorization: Bearer {{ token["json"]["token"] }}
+      body: '{"name":"Backup","description":"Ansible Backup"}'
+      return_content: yes
+      status_code: 201
+      body_format: json
+      validate_certs: no
+    register: result
+  - debug:
+      var: result

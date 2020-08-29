@@ -1,0 +1,32 @@
+---
+- name: Rollback APIC Snapshot
+  hosts: APIC-1
+
+  tasks:
+    - name: Query Existing Snapshots
+  	  aci_config_snapshot:
+  	  	host: "{{ ansible_host}}"
+  	  	username: "{{ ansible_user }}"
+  	  	password: "{{ ansible_password }}"
+  	  	export_policy: config_backup
+  	  	state: query
+  	  delegate_to: localhost
+      register: backups
+    - debug:
+        var: backups["json"]["backups"]
+
+    - pause:
+        prompt: "Which backup ID would you like to restore?"
+      register: "BackupID"
+    - debug:
+        var: BackupID
+
+    - name: Rollback to Snapshot
+      aci_config_rollback:
+  	  	host: "{{ ansible_host}}"
+  	  	username: "{{ ansible_user }}"
+  	  	password: "{{ ansible_password }}"
+  	  	export_policy: config_backup
+  	  	snapshot: "{{ BackupID }}"
+  	  	state: rollback
+  	  delegate_to: localhost

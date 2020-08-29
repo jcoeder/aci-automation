@@ -1,0 +1,60 @@
+# NOTE: the loop_control sets the iteration variable name from item to site_name because the inner loops in the playbooks already are using item 
+# we do this to avoid conflicting issues on the inner loops!
+---
+- hosts: localhost
+  connection: local
+  tasks:
+# Variable file inclusion section
+    - name: include variables
+      include_vars: 
+        file: "ansible variables/site_list.yml"
+        name: site_list
+    - name: import playbook fabric_nodes_add
+      include: fabric_nodes_add.yml
+      vars:
+        APIC: "{{ site_name }}"
+      with_items: "{{ site_list['SITE_LIST'] }}"
+      loop_control:
+        loop_var: site_name
+    - name: import playbook vlan_pool_physical_domain_aaep_add
+      include: vlan_pool_physical_domain_aaep_add.yml
+      vars:
+        APIC: "{{ site_name }}"
+      with_items: "{{ site_list['SITE_LIST'] }}"
+      loop_control:
+        loop_var: site_name
+    - name: import playbook interface_policy_add
+      include: interface_policy_add.yml
+      vars:
+        APIC: "{{ site_name }}"
+      with_items: "{{ site_list['SITE_LIST'] }}"
+      loop_control:
+        loop_var: site_name
+    - name: import playbook interface_policy_group_add
+      include: interface_policy_group_add.yml
+      vars:
+        APIC: "{{ site_name }}"
+      with_items: "{{ site_list['SITE_LIST'] }}"
+      loop_control:
+        loop_var: site_name
+    - name: import playbook leaf_switch_interface_profile_add
+      include: leaf_switch_interface_profile_add.yml
+      vars:
+        APIC: "{{ site_name }}"
+      with_items: "{{ site_list['SITE_LIST'] }}"
+      loop_control:
+        loop_var: site_name
+    - name: import playbook spine_switch_interface_profile_add
+      include: spine_switch_interface_profile_add.yml
+      vars:
+        APIC: "{{ site_name }}"
+      with_items: "{{ site_list['SITE_LIST'] }}"
+      loop_control:
+        loop_var: site_name
+    - name: build multisite fabric external profile
+      include: multisite_external_fabric_policy_add.yml
+      vars:
+        APIC: "{{ site_name }}"
+      with_items: "{{ site_list['SITE_LIST'] }}"
+      loop_control:
+        loop_var: site_name

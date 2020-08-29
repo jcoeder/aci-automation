@@ -1,0 +1,27 @@
+---
+- hosts: mso_leader
+  gather_facts: false
+
+  vars:
+    ansible_user: root
+    ansible_ssh_pass: PASSWORD
+#    ansible_python_interpreter: venv/bin/python
+
+  tasks:
+# Get version of the build to use for full path of script
+  - name: Get MSO version
+    command: "ls /opt/cisco/msc/builds/"
+    register: mso_version
+
+# Swarm is built so initialize the MSO itself
+  - name: Initialize the MSO services in Docker Swarm
+    shell: "nohup ./msc_deploy.py"
+    args:
+      chdir: /opt/cisco/msc/builds/{{ mso_version.stdout }}/prodha/
+    async: 1
+    poll: 0
+ 
+ # We are not polling the previous task.  Just waiting 30 minutes.  Something in the return code of the previous task is not working as expected.
+  - name: Wait for cluster to build
+    pause:
+      minutes: 30

@@ -1,0 +1,12 @@
+---
+# remove the temp file that mso_configure_site_infra.yml used 
+   - name: remove mso_configure_site_infra temp file named site_temp_file.txt
+     file:
+       path: ./site_temp_file.txt
+       state: absent
+       
+# remove the temp file that mso_configure_site_infra.yml used 
+   - name: remove mso_configure_site_infra temp file named site_temp_file.txt
+     file:
+       path: ./tenant_site_temp_file.txt
+       state: absent

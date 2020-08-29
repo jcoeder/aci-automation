@@ -1,0 +1,109 @@
+---
+# Pull in the variable list section, this includes TWO variable files and gives them a name.  A with_nested section iterates over each of them later
+# in the with_nested section it puts the results into a list called 'item'. From the apic_host[APIC] that is called first in with_nested
+# that goes into the list entry item[0] and the vlan_pool[APIC] goes into item[1]
+    - name: include apic host variables file 
+      include_vars:
+        file: "ansible variables/apic_host_ip_variables.yml"
+        name: apic_host
+    - name: include vpc interface group variables file
+      include_vars: 
+        file: "ansible variables/vpc_interface_policy_groups_variables.yml"
+        name: vpc_ipg
+    - name: include interface group variables file
+      include_vars:
+        file: "ansible variables/interface_policy_groups_variables.yml"
+        name: ipg
+    - name: include spine interface group variables file
+      include_vars:
+        file: "ansible variables/spine_interface_policy_groups_variables.yml"
+        name: spine_ipg
+        
+# Build Interface Policy Groups Section
+    - name: Add all VLAN pools in the list under the AAEP Domain Pool sheet
+      aci_interface_policy_leaf_policy_group:
+        # the "item[0]" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item[0]['APIC OOB Address'] }}"
+        username: "{{  item[0]['Username'] }}"
+        password: "{{  item[0]['Password'] }}"
+        validate_certs: False
+        lag_type: leaf
+        aep: "{{  item[1]['AEP'] }}"
+        policy_group: "{{  item[1]['Name'] }}"
+        link_level_policy: "{{  item[1]['Link Level Policy'] }}"
+        cdp_policy: "{{  item[1]['CDP Policy'] }}"
+        lldp_policy: "{{  item[1]['LLDP Policy'] }}"
+        mcp_policy: "{{  item[1]['MCP Policy'] }}"
+        port_security_policy: "{{  item[1]['Port Security Policy'] }}"
+        state: present
+      # the with_nested items will take the variables files and iterate through them
+      with_nested: 
+        - "{{ apic_host[APIC] }}"
+        - "{{ ipg[APIC] }}"
+      delegate_to: localhost
+      
+# Build Interface Policy Groups Section
+    - name: Add all VLAN pools in the list under the AAEP Domain Pool sheet
+      aci_interface_policy_leaf_policy_group:
+        # the "item[0]" is the current iteration of the loop in with_items and 'APIC OOB Address' is a key in the variable file
+        host: "{{ item[0]['APIC OOB Address'] }}"
+        username: "{{  item[0]['Username'] }}"
+        password: "{{  item[0]['Password'] }}"
+        validate_certs: False
+        lag_type: node
+        aep: "{{  item[1]['AEP'] }}"
+        port_channel_policy: "{{  item[1]['Port Channel Policy'] }}"
+        policy_group: "{{  item[1]['Name'] }}"
+        link_level_policy: "{{  item[1]['Link Level Policy'] }}"
+        cdp_policy: "{{  item[1]['CDP Policy'] }}"
+        lldp_policy: "{{  item[1]['LLDP Policy'] }}"
+        mcp_policy: "{{  item[1]['MCP Policy'] }}"
+        port_security_policy: "{{  item[1]['Port Security Policy'] }}"
+        state: present
+      # the with_nested items will take the variables files and iterate through them
+      with_nested: 
+        - "{{ apic_host[APIC] }}"
+        - "{{ vpc_ipg[APIC] }}"
+      delegate_to: localhost
+      
+# Creation of Spine Interface Policy Groups
+    - name: Add Spine Interface Policy Groups
+      aci_rest:
+        host: "{{ item[0]['APIC OOB Address'] }}"
+        username: "{{ item[0]['Username'] }}"
+        password: "{{ item[0]['Password'] }}"
+        validate_certs: False
+        path: /api/node/mo/uni/infra/funcprof/spaccportgrp-{{ item[1]['Name'] }}.json
+        method: post
+        content: {"infraSpAccPortGrp":
+         {"attributes":
+          {"dn":"uni/infra/funcprof/spaccportgrp-{{ item[1]['Name'] }}",
+             "name":"{{ item[1]['Name'] }}",
+             "rn":"spaccportgrp-{{ item[1]['Name'] }}",
+             "status":"created"},
+            "children":[
+             {"infraRsHIfPol":
+              {"attributes":
+                 {"tnFabricHIfPolName":"{{ item[1]['Link Level Policy'] }}",
+                  "status":"created,modified"},
+                "children":[]}},
+                {"infraRsCdpIfPol":
+                 {"attributes":
+                  {"tnCdpIfPolName":"{{ item[1]['CDP Policy'] }}",
+                     "status":"created,modified"},
+                    "children":[]}},
+                    {"infraRsAttEntP":
+                     {"attributes":
+                      {"tDn":"uni/infra/attentp-{{ item[1]['AEP'] }}",
+                         "status":"created,modified"},
+                        "children":[]}
+                    }
+                ]
+            }
+          }
+      ignore_errors: yes
+      # the with_nested items will take the variables files and iterate through them
+      with_nested: 
+        - "{{ apic_host[APIC] }}"
+        - "{{ spine_ipg[APIC] }}"
+      delegate_to: localhost

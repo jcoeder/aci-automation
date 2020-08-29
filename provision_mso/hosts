@@ -1,0 +1,6 @@
+[mso_leader]
+node1 ansible_host=172.31.33.205
+
+[mso_followers]
+node2 ansible_host=172.31.33.206
+node3 ansible_host=172.31.33.207

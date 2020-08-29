@@ -1,0 +1,66 @@
+# NOTE: the loop_control sets the iteration variable name from item to site_name because the inner loops in the playbooks already are using item 
+# we do this to avoid conflicting issues on the inner loops!
+---
+- hosts: localhost
+  connection: local
+  tasks:
+# Variable file inclusion section
+    - name: include variables
+      include_vars: 
+        file: "ansible variables/site_list.yml"
+        name: site_list
+        
+#### Here is where we get into MSO config ####
+    - name: build MSO site in the MSO controller
+      include: mso_site_add.yml
+      vars:
+        APIC: "{{ site_name }}"
+      with_items: "{{ site_list['SITE_LIST'] }}"
+      loop_control:
+        loop_var: site_name
+        
+# Pause for a few to let MSO catch up
+    - name: slow down so MSO can catch up
+      pause:
+        seconds: 30
+
+# Push the site Infra config
+    - name: push infra config for sites
+      include: mso_configure_site_infra.yml
+      vars:
+        APIC: "{{ site_name }}"
+      with_items: "{{ site_list['SITE_LIST'] }}"
+      loop_control:
+        loop_var: site_name
+      
+# Push the site Infra config
+    - name: Push Tenants to MSO and in turn to APICs
+      include: mso_tenant_add.yml
+      vars:
+        APIC: "{{ site_name }}"
+      with_items: "{{ site_list['SITE_LIST'] }}"
+      loop_control:
+        loop_var: site_name
+        
+ # Build the Tenants for the Sites
+    - name: build tenants
+      include: mso_tenant_add.yml
+      vars:
+        APIC:  "{{ site_name }}"
+      with_items: "{{ site_list['SITE_LIST'] }}"
+      loop_control:
+        loop_var: site_name
+        
+# Build the Schemas
+    - name: build schemas
+      include: mso_schema_add.yml
+      vars:
+        APIC:  "{{ site_name }}"
+      with_items: "{{ site_list['SITE_LIST'] }}"
+      loop_control:
+        loop_var: site_name
+      
+# Remove the temp files that was needed for mso_configure_site_infra.yml
+    - name: remove temp file site_temp_file.txt
+      include: mso_remove_temp_file.yml
+      

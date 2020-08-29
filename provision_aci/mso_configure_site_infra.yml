@@ -1,0 +1,61 @@
+---
+# Pull in info from the multisite_apic_variables.yml file 
+    - name: include leaf switch profiles variables file
+      include_vars: 
+        file: "ansible variables/multisite_apic_variables.yml"
+        name: multisite_apic
+    - name: include the bgp variables file
+      include_vars:
+        file: "ansible variables/bgp_route_reflectors_variables.yml"
+        name: bgp_info
+          
+                      
+# Have to add all the good details like TEP addressing, OSPF, routed interface and IP, OSPF area, etc through a direct API call
+# have to authenticate and get a Bearer token to use first
+
+    - name: Get authentication token
+      uri:
+        url: "https://{{ item['MSO IP'] }}/api/v1/auth/login"
+        method: POST
+        body_format: json
+        body: {"username":"{{ item['MSO Username'] }}","password":"{{ item['MSO Password'] }}"}
+        return_content: yes
+        status_code: 201
+        validate_certs: no
+      # commented this out for now as a loop here doesn't make much sense, APIC API calls are pretty atomic whereas MSO is not and more than likely
+      # we will be calling to the same APIC for all sites.
+      #with_items: "{{ multisite_apic[APIC] }}"  
+      register: token
+      with_items: "{{ multisite_apic[APIC] }}"
+#    - debug:
+#       var: token
+
+    - name: Configure Infra of deployed sites
+      uri:
+        url: "https://{{ item['MSO IP'] }}/mso/api/v1/sites/fabric-connectivity"
+        method: PUT
+        headers:
+            Authorization: "Bearer {{ token['results'][0]['json']['token'] }}"
+        # HUGE NOTE HERE: the quoting is extremely important so that objects are passed as strings when needed or numbers when not 
+        # Also the regex_replace is important as lookup and split wrap the list in double quotes which the api call won't accept
+        body: {
+            'controlPlaneBgpConfig': {
+            'peeringType': 'full-mesh',
+            'ttl': 16,
+            'keepAliveInterval': 60,
+            'holdInterval': 180,
+            'staleInterval': 300,
+            'gracefulRestartEnabled': true,
+            'maxAsLimit': 0
+          },
+          'sites': "{{ lookup('file', 'site_temp_file.txt').split('\n') |regex_replace('\"', '') }}"
+        }
+        return_content: yes
+        status_code: 200
+        body_format: json
+        validate_certs: no
+      register: result
+      with_items: "{{ multisite_apic[APIC] }}"
+      ignore_errors: yes
+#    - debug:
+#        var: result
